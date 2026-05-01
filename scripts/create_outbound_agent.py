@@ -193,7 +193,7 @@ print(f"  LLM ID: {llm.llm_id}")
 print("Creando agente outbound...")
 agent = client.agent.create(
     agent_name="Sofía Outbound — Inmobiliaria Horizontes",
-    voice_id="cartesia-Sofia",  # TODO Chile: revisar voces es-CL en Retell. Esta voz es LATAM neutra.
+    voice_id="retell-Claudia",  # Voz es-CL elegida por el usuario
     language="es-419",
     response_engine={
         "type": "retell-llm",
@@ -211,7 +211,7 @@ agent = client.agent.create(
 
 print(f"  Agent ID: {agent.agent_id}")
 print(f"  Nombre: Sofía Outbound — Inmobiliaria Horizontes")
-print(f"  Voz: cartesia-Sofia (LATAM neutra — revisar voces es-CL)")
+print(f"  Voz: retell-Claudia (es-CL)")
 print(f"  Modelo: claude-4.5-sonnet")
 print(f"  Dynamic vars: lead_name, zona_interes, tipo_buscado, presupuesto, notas")
 print(f"\n  RETELL_OUTBOUND_AGENT_ID={agent.agent_id}")
