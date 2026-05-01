@@ -10,7 +10,7 @@ from retell import Retell
 
 client = Retell(api_key=RETELL_API_KEY)
 
-MODAL_BASE = "https://innovandohorizontes--sofia-voice-agent-api.modal.run"
+MODAL_BASE = "https://cesaresposito--sofia-voice-agent-api.modal.run"
 
 # ── Prompt outbound ──────────────────────────────────────────
 
