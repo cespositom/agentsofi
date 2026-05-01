@@ -252,7 +252,7 @@ TOOLS = [
 
 print("Creando Retell LLM...")
 llm = client.llm.create(
-    model="claude-4.5-sonnet",
+    model="claude-4.5-haiku",  # más barato (~30-40% menos) que sonnet, calidad suficiente
     begin_message="Hola, gracias por llamar a Inmobiliaria Horizontes. Soy Sofía, ¿en qué te puedo ayudar?",
     general_prompt=SOFIA_PROMPT,
     general_tools=TOOLS,
@@ -285,7 +285,7 @@ print(f"  Agente creado: {agent.agent_id}")
 print(f"  Nombre: Sofía — Inmobiliaria Horizontes")
 print(f"  Voz: retell-Claudia (es-CL)")
 print(f"  Idioma: es-419 (LATAM)")
-print(f"  Modelo: claude-4.5-sonnet")
+print(f"  Modelo: claude-4.5-haiku")
 print(f"  Webhook: {MODAL_BASE}/retell-webhook")
 print(f"\n  AGENT_ID: {agent.agent_id}")
 print(f"  LLM_ID: {llm.llm_id}")

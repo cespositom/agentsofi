@@ -172,7 +172,7 @@ TOOLS = [
 
 print("Creando LLM outbound...")
 llm = client.llm.create(
-    model="claude-4.5-sonnet",
+    model="claude-4.5-haiku",  # más barato (~30-40% menos) que sonnet, calidad suficiente
     begin_message="",  # Vacío — el agente usa el prompt con variables dinámicas para la apertura
     start_speaker="agent",
     general_prompt=SOFIA_OUTBOUND_PROMPT,
@@ -212,7 +212,7 @@ agent = client.agent.create(
 print(f"  Agent ID: {agent.agent_id}")
 print(f"  Nombre: Sofía Outbound — Inmobiliaria Horizontes")
 print(f"  Voz: retell-Claudia (es-CL)")
-print(f"  Modelo: claude-4.5-sonnet")
+print(f"  Modelo: claude-4.5-haiku")
 print(f"  Dynamic vars: lead_name, zona_interes, tipo_buscado, presupuesto, notas")
 print(f"\n  RETELL_OUTBOUND_AGENT_ID={agent.agent_id}")
 print(f"  RETELL_OUTBOUND_LLM_ID={llm.llm_id}")
