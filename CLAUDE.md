@@ -14,7 +14,7 @@ Agente de voz IA para inmobiliaria en **Santiago de Chile**. Recibe y origina ll
 | Voz | Retell AI (STT + LLM + TTS) |
 | Backend | Python 3.11+, FastAPI, Modal (serverless + cron) |
 | Telefonía | Twilio (número Chile +56 → SIP trunk Retell) |
-| CRM + Auth | **Supabase self-hosted** en `http://agente-voz-inmobiliaria-supabase-cc4fff-147-93-188-38.traefik.me/` |
+| CRM + Auth | **Supabase self-hosted** en `https://spbsagtimb.cesmark.cl` (Kong API) — Studio UI en `https://studiospbsagtimb.cesmark.cl` |
 | Webapp | Next 16 (Turbopack) + React 19 + Tailwind 4 + `@supabase/ssr` |
 | Análisis | Anthropic Claude Sonnet 4.5 |
 

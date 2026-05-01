@@ -29,7 +29,7 @@ Plantilla `santmun/sofia-voice-agent` reescrita para inmobiliaria en **Santiago 
 ## Arranque
 
 ### 1. Configurar Supabase
-1. Abrir SQL Editor en `http://agente-voz-inmobiliaria-supabase-cc4fff-147-93-188-38.traefik.me/`
+1. Abrir SQL Editor en `https://studiospbsagtimb.cesmark.cl/` (Studio UI). API Kong: `https://spbsagtimb.cesmark.cl`
 2. Pegar y ejecutar `supabase_schema.sql` completo
 3. En **Settings → API**, copiar `URL`, `anon key` y `service_role key`
 

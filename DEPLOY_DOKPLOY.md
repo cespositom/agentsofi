@@ -36,7 +36,7 @@ Modal (deploy aparte vía CLI):
 
 | Build Arg | Valor |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `http://agente-voz-inmobiliaria-supabase-cc4fff-147-93-188-38.traefik.me` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://spbsagtimb.cesmark.cl` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `<anon key del Supabase>` |
 
 ### 4. Environment variables (runtime)
