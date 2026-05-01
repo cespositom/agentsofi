@@ -1,0 +1,180 @@
+═══════════════════════════════════════════════════════════════════════════════
+ MANUAL DE TROUBLESHOOTING — Supabase self-hosted detrás de Traefik/Dokploy
+ Bug: Kong y otros containers NO pueden llegar a PostgREST (rest:3000)
+ Síntoma: GET /rest/v1/* desde Internet cuelga 15s y devuelve 504/timeout,
+          aunque /auth/v1/* responde rápido
+═══════════════════════════════════════════════════════════════════════════════
+
+ROOT CAUSE
+──────────
+El sysctl `net.bridge.bridge-nf-call-iptables=1` (default en Docker) hace que
+los paquetes Layer 2 entre containers de la misma bridge network pasen por las
+chains iptables (FORWARD, ufw-*, DOCKER-FORWARD).
+
+En servidores donde:
+  - UFW estuvo instalado y se desinstaló (deja chains ufw-*-forward huérfanas)
+  - Otros stacks (ej. Dokploy) tienen containers expuestos en el mismo puerto
+    interno (3000) que PostgREST
+  - Hay reglas DNAT en la chain DOCKER que interceptan tráfico al puerto 3000
+
+→ Los paquetes inter-container al puerto 3000 NUNCA reciben SYN-ACK.
+   Otros puertos (auth:9999, meta:8080) funcionan porque no matchean reglas.
+
+Síntoma característico:
+  - HOST → REST_IP:3000      = 200 OK rápido
+  - container A → REST_IP:3000 = TIMEOUT
+  - container A → AUTH_IP:9999 = 200 OK
+  - tcpdump muestra SYN saliendo del cliente, ningún SYN-ACK de vuelta
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ DIAGNÓSTICO RÁPIDO (5 comandos)
+═══════════════════════════════════════════════════════════════════════════════
+
+# 1) Verificar containers Supabase Up + healthy
+docker ps --format '{{.Names}}\t{{.Status}}' | grep supabase
+
+# 2) Confirmar que el síntoma es Kong → REST específicamente
+KONG=$(docker ps --format '{{.Names}}' | grep "supabase.*kong" | head -1)
+docker exec $KONG wget -qO- --timeout=5 http://auth:9999/health 2>&1 | head -c 80
+docker exec $KONG wget -qO- --timeout=5 http://rest:3000/  2>&1 | head -c 80
+# auth devuelve JSON. rest da "wget: download timed out" → bug confirmado.
+
+# 3) Ver si HOST sí llega al REST (descarta PostgREST mismo)
+NETNAME=$(docker network ls --format '{{.Name}}' | grep supabase | head -1)
+REST=$(docker ps --format '{{.Names}}' | grep "supabase.*rest" | head -1)
+REST_IP=$(docker inspect $REST --format "{{(index .NetworkSettings.Networks \"$NETNAME\").IPAddress}}")
+curl -s -m 5 -o /dev/null -w "HOST -> REST: HTTP %{http_code} time=%{time_total}\n" http://$REST_IP:3000/
+# Si HOST devuelve 200 pero containers no → es el bug.
+
+# 4) Confirmar con tcpdump que solo van SYN, no vuelve respuesta
+timeout 6 tcpdump -i any -n -q "host $REST_IP and port 3000" 2>&1 &
+sleep 1
+docker run --rm --network $NETNAME alpine sh -c "wget -qO- --timeout=3 http://$REST_IP:3000/" >/dev/null 2>&1
+sleep 2
+# Verás solo "172.21.x.x.PORT > $REST_IP.3000: tcp 0" (SYNs sin respuesta)
+
+# 5) Estado del sysctl
+sysctl net.bridge.bridge-nf-call-iptables
+# Si devuelve "= 1" → causa probable.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ SOLUCIÓN (1 comando, persistente)
+═══════════════════════════════════════════════════════════════════════════════
+
+# Aplicar AHORA (no requiere reinicio):
+sysctl -w net.bridge.bridge-nf-call-iptables=0
+
+# Persistir entre reinicios del server:
+echo "net.bridge.bridge-nf-call-iptables=0" > /etc/sysctl.d/99-docker-bridge.conf
+sysctl -p /etc/sysctl.d/99-docker-bridge.conf
+
+# Verificar el fix:
+ANON=$(grep "^ANON_KEY=" /root/supabase-creds.txt | cut -d= -f2-)
+curl -s -m 10 -o /dev/null -w "Internet -> Kong -> REST: HTTP %{http_code} time=%{time_total}\n" \
+  -H "apikey: $ANON" \
+  "https://TU_DOMINIO_KONG/rest/v1/propiedades?select=id&limit=1"
+# Esperado: HTTP 200 en menos de 1s (con [] si la tabla está vacía).
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ EFECTOS COLATERALES (importante)
+═══════════════════════════════════════════════════════════════════════════════
+
+Con bridge-nf-call-iptables=0:
+  ✓ Paquetes inter-container del bridge se forwardean en L2 sin pasar por
+    iptables filter. Resuelve el bug.
+  ✓ El aislamiento entre Docker networks DISTINTAS sigue funcionando (lo hace
+    Docker en otra capa, vía DOCKER-ISOLATION chains).
+  ⚠ Si tenés workloads que dependen de filtros iptables sobre tráfico
+    intra-bridge, dejarán de aplicar. En setups Dokploy + Supabase + apps
+    estándar = no importa.
+
+Si por alguna razón necesitás bridge-nf=1 activo, alternativas:
+  A) Cambiar Dokploy a otro puerto distinto del 3000 (libera la regla DNAT).
+  B) Cambiar PGRST_SERVER_PORT del PostgREST a un puerto distinto al 3000
+     (ej 3001) y actualizar `url: http://rest:3001/` en kong.yml.
+  C) Limpiar las chains ufw-* huérfanas si UFW ya no se usa.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ SI bridge-nf-call-iptables=0 NO RESUELVE — diagnóstico extendido
+═══════════════════════════════════════════════════════════════════════════════
+
+Causa alternativa #1: PostgREST escucha solo en una IP específica
+─────────────────────────────────────────────────────────────────
+docker inspect $REST --format '{{range .Config.Env}}{{println .}}{{end}}' | grep PGRST_SERVER_HOST
+# Default debería ser vacío (escucha en todas). Si tiene una IP específica
+# o "127.0.0.1", containers externos no llegan. Editar el compose y poner:
+#   PGRST_SERVER_HOST=*4   (o quitar la var)
+
+
+Causa alternativa #2: kong.yml corrupto en el container
+────────────────────────────────────────────────────────
+docker logs --tail 5 supabase-XXX-kong | grep "1:18: mapping values"
+# Si aparece, kong.yml está roto. Recrear container:
+docker stop supabase-XXX-kong && docker rm supabase-XXX-kong
+# Después: Dokploy → Redeploy del stack
+# (Dokploy lo recrea con kong.yml regenerado desde temp.yml)
+
+
+Causa alternativa #3: Cloudflare cacheando 404 viejos
+──────────────────────────────────────────────────────
+# Si el dominio está atrás de Cloudflare y devuelve 404 instantáneo aunque
+# el backend esté bien:
+# Cloudflare → Caching → Purge → Single File para el path que falla.
+# O temporalmente desactivar el proxy (nube gris en lugar de naranja).
+
+
+Causa alternativa #4: JWT_SECRET desincronizado
+────────────────────────────────────────────────
+# Si Kong devuelve 401 "Invalid authentication credentials" rápido (no timeout):
+# Las JWT firmadas con un secret diferente al que tiene Kong+PostgREST.
+docker inspect supabase-XXX-rest --format '{{range .Config.Env}}{{println .}}{{end}}' | grep PGRST_JWT_SECRET
+# Comparar primeros 30 chars con el JWT_SECRET del .env / archivo de creds.
+# Si difieren → hay 2 stacks de Supabase mezclados o el .env del container
+# Kong tiene env vars stale (forzar redeploy del stack desde Dokploy).
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ PREVENCIÓN (en próximas instalaciones)
+═══════════════════════════════════════════════════════════════════════════════
+
+Antes de deployar Supabase self-hosted en un VPS Dokploy, ejecutar UNA VEZ:
+
+  echo "net.bridge.bridge-nf-call-iptables=0" > /etc/sysctl.d/99-docker-bridge.conf
+  sysctl -p /etc/sysctl.d/99-docker-bridge.conf
+  systemctl restart docker
+
+Eso evita el bug desde el día 1.
+
+Adicional — si hubo UFW alguna vez en el server:
+
+  iptables -L FORWARD --line-numbers | grep ufw
+  # Para cada línea: iptables -D FORWARD <line>
+  # (Limpia chains huérfanas que ya no usa nadie)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ LOG DE LA INVESTIGACIÓN ORIGINAL (para contexto histórico)
+═══════════════════════════════════════════════════════════════════════════════
+
+Pistas que LLEVARON a la solución:
+  - Auth funcionaba, REST cuelga → bug específico al puerto 3000
+  - HOST → REST = 200, container → REST = timeout → routing inter-container
+  - tcpdump mostró SYN saliendo, 0 SYN-ACK volviendo → paquete bloqueado
+  - DOCKER-USER, FORWARD, ufw-* sin reglas DROP visibles para 3000 → algo
+    más sutil, no una regla DROP explícita
+  - bridge-nf-call-iptables=1 obliga a paquetes L2 a pasar por iptables
+  - Al setear bridge-nf=0, paquetes L2 se forwardean directo → arreglado en 1s
+
+Pistas FALSAS que costaron tiempo:
+  - kong.yml corrupto (sí estaba, pero era un síntoma de otro bug)
+  - JWT_SECRET desincronizado (verdadero pero ya estaba bien)
+  - DNS aliases mal después de docker network disconnect/reconnect
+  - Cloudflare cacheando (sí cacheaba, pero el bug subyacente era el sysctl)
+  - DNAT del puerto 3000 redirigiendo a Dokploy (existía pero no era la causa)
+
+Tiempo total: ~2 horas. Lección: validar SIEMPRE con tcpdump antes de
+asumir capa de aplicación cuando hay timeout en TCP.
