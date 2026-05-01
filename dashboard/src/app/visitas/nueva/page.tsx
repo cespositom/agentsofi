@@ -7,6 +7,7 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { Lead, Propiedad } from "@/lib/supabase/types";
+import { toSantiagoISO } from "@/lib/format";
 
 export default function NuevaVisitaPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function NuevaVisitaPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const fechaHora = `${fecha}T${hora}:00-04:00`;
+    const fechaHora = toSantiagoISO(fecha, hora);
     const { error } = await supabase.from("visitas").insert({
       lead_id: leadId || null,
       propiedad_id: propId || null,

@@ -3,14 +3,19 @@ from fastapi import FastAPI
 
 modal_app = modal.App("sofia-voice-agent")
 
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "retell-sdk>=5.0.0",
-    "twilio>=9.0.0",
-    "anthropic>=0.42.0",
-    "supabase>=2.7.0",
-    "requests>=2.32.0",
-    "python-dotenv>=1.0.0",
-    "fastapi>=0.115.0",
+image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .pip_install(
+        "retell-sdk>=5.0.0",
+        "twilio>=9.0.0",
+        "anthropic>=0.42.0",
+        "supabase>=2.7.0",
+        "requests>=2.32.0",
+        "python-dotenv>=1.0.0",
+        "fastapi>=0.115.0",
+        "tzdata>=2024.1",
+    )
+    .add_local_python_source("app", copy=True)
 )
 
 sofia_secret = modal.Secret.from_name("sofia-credentials")

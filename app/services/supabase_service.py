@@ -9,6 +9,9 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
+
+CHILE_TZ = ZoneInfo("America/Santiago")
 
 from supabase import create_client, Client
 
@@ -234,8 +237,9 @@ def book_visit(
     propiedad_id: str | None = None,
     notas: str = "",
 ) -> dict:
-    """Crea una visita en Supabase. Fecha en TZ America/Santiago."""
-    fecha_hora = f"{preferred_date}T{preferred_time}:00-04:00"  # CLT/CLST aprox
+    """Crea una visita en Supabase. Fecha en TZ America/Santiago (DST automático)."""
+    naive = datetime.fromisoformat(f"{preferred_date}T{preferred_time}:00")
+    fecha_hora = naive.replace(tzinfo=CHILE_TZ).isoformat()
 
     lead = find_lead_by_phone(phone) if phone else None
     payload: dict[str, Any] = {
@@ -267,8 +271,8 @@ def book_visit(
 
 def get_available_slots(date_iso: str) -> list[str]:
     """Slots de 1h entre 09:00 y 19:00, descartando los ocupados."""
-    start = f"{date_iso}T00:00:00-04:00"
-    end = f"{date_iso}T23:59:59-04:00"
+    start = datetime.fromisoformat(f"{date_iso}T00:00:00").replace(tzinfo=CHILE_TZ).isoformat()
+    end = datetime.fromisoformat(f"{date_iso}T23:59:59").replace(tzinfo=CHILE_TZ).isoformat()
 
     res = (
         _sb()
@@ -282,7 +286,7 @@ def get_available_slots(date_iso: str) -> list[str]:
     ocupados = set()
     for v in res.data or []:
         try:
-            dt = datetime.fromisoformat(v["fecha_hora"].replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(v["fecha_hora"].replace("Z", "+00:00")).astimezone(CHILE_TZ)
             ocupados.add(dt.strftime("%H:%M"))
         except Exception:
             continue

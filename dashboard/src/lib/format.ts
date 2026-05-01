@@ -32,3 +32,23 @@ export function fmtFechaCorta(iso: string) {
     month: "short",
   });
 }
+
+// Devuelve el offset actual de Santiago en formato "+HH:MM" o "-HH:MM"
+// Maneja automáticamente CLT (-04:00) vs CLST (-03:00) según DST.
+export function offsetSantiago(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Santiago",
+    timeZoneName: "longOffset",
+  }).formatToParts(date);
+  const tz = parts.find((p) => p.type === "timeZoneName")?.value || "GMT-04:00";
+  // tz viene como "GMT-04:00" o "GMT-03:00"
+  return tz.replace("GMT", "") || "-04:00";
+}
+
+// Convierte fecha (YYYY-MM-DD) + hora (HH:MM) interpretadas en TZ Santiago
+// a un ISO con offset correcto para insertar en Supabase (timestamptz).
+export function toSantiagoISO(fecha: string, hora: string): string {
+  const refDate = new Date(`${fecha}T${hora}:00`);
+  const off = offsetSantiago(refDate);
+  return `${fecha}T${hora}:00${off}`;
+}
