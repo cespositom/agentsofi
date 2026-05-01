@@ -36,14 +36,24 @@ export default async function DashboardPage() {
   const llamadas = (llamadasRes.data ?? []) as Llamada[];
   const visitas = (visitasRes.data ?? []) as unknown as Visita[];
 
-  const tiles = [
+  const tilesPrimarios = [
     { label: "Leads pendientes", value: kpi?.leads_pendientes ?? 0, hint: "para outbound" },
     { label: "Leads Hot", value: kpi?.leads_hot ?? 0, hint: "alta prioridad" },
     { label: "Visitas próximas", value: kpi?.visitas_proximas ?? 0, hint: "agendadas" },
     { label: "Llamadas 24h", value: kpi?.llamadas_24h ?? 0, hint: "últimas" },
     { label: "Propiedades", value: kpi?.propiedades_disponibles ?? 0, hint: "disponibles" },
-    { label: "Costo 24h", value: fmtUSD(kpi?.costo_24h_usd ?? 0), hint: "Retell + Twilio" },
-    { label: "Costo total", value: fmtUSD(kpi?.costo_total_usd ?? 0), hint: "histórico" },
+  ];
+
+  const tilesCostos24h = [
+    { label: "Retell 24h", value: fmtUSD(kpi?.costo_retell_24h_usd ?? 0), hint: "LLM + TTS + STT" },
+    { label: "Twilio 24h", value: fmtUSD(kpi?.costo_twilio_24h_usd ?? 0), hint: "telefonía estimada" },
+    { label: "Total 24h", value: fmtUSD(kpi?.costo_24h_usd ?? 0), hint: "Retell + Twilio" },
+  ];
+
+  const tilesCostosTotal = [
+    { label: "Retell total", value: fmtUSD(kpi?.costo_retell_total_usd ?? 0), hint: "histórico" },
+    { label: "Twilio total", value: fmtUSD(kpi?.costo_twilio_total_usd ?? 0), hint: "histórico" },
+    { label: "Total", value: fmtUSD(kpi?.costo_total_usd ?? 0), hint: "histórico" },
   ];
 
   return (
@@ -56,8 +66,8 @@ export default async function DashboardPage() {
           </p>
         </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {tiles.map((t) => (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {tilesPrimarios.map((t) => (
             <Card key={t.label} className="border-white/[0.06] bg-white/[0.02]">
               <CardContent className="p-4">
                 <p className="text-[11px] uppercase tracking-wider text-neutral-500">
@@ -68,6 +78,48 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div>
+          <h2 className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">
+            Costos últimas 24 h
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {tilesCostos24h.map((t) => (
+              <Card key={t.label} className="border-white/[0.06] bg-white/[0.02]">
+                <CardContent className="p-4">
+                  <p className="text-[11px] uppercase tracking-wider text-neutral-500">
+                    {t.label}
+                  </p>
+                  <p className="font-heading text-2xl italic mt-1 text-amber-400">
+                    {t.value}
+                  </p>
+                  <p className="text-[10px] text-neutral-600 mt-0.5">{t.hint}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-[11px] uppercase tracking-wider text-neutral-500 mb-2">
+            Costos histórico total
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {tilesCostosTotal.map((t) => (
+              <Card key={t.label} className="border-white/[0.06] bg-white/[0.02]">
+                <CardContent className="p-4">
+                  <p className="text-[11px] uppercase tracking-wider text-neutral-500">
+                    {t.label}
+                  </p>
+                  <p className="font-heading text-2xl italic mt-1 text-amber-400">
+                    {t.value}
+                  </p>
+                  <p className="text-[10px] text-neutral-600 mt-0.5">{t.hint}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">

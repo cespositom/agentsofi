@@ -188,6 +188,9 @@ def update_lead(
 
 # ─── Llamadas ──────────────────────────────────────────────────
 
+TWILIO_RATE_PER_MIN_USD = 0.20  # outbound CL móvil aprox; ajustar si cambia tarifario
+
+
 def create_call_record(
     titulo: str,
     tipo: str,
@@ -205,6 +208,8 @@ def create_call_record(
 ) -> dict:
     lead = find_lead_by_phone(telefono) if telefono else None
 
+    costo_twilio = round((duracion_seg / 60.0) * TWILIO_RATE_PER_MIN_USD, 4) if duracion_seg else 0
+
     payload: dict[str, Any] = {
         "titulo": titulo,
         "tipo": tipo,
@@ -214,7 +219,8 @@ def create_call_record(
         "duracion_seg": duracion_seg,
         "sentimiento": sentimiento,
         "cita_agendada": cita_agendada,
-        "costo_usd": costo_usd,
+        "costo_retell_usd": costo_usd,
+        "costo_twilio_usd": costo_twilio,
     }
     if resumen:
         payload["resumen"] = resumen[:4000]

@@ -93,7 +93,8 @@ export interface Llamada {
   sentimiento: LlamadaSentimiento;
   cita_agendada: boolean;
   retell_call_id: string | null;
-  costo_usd: number;
+  costo_retell_usd: number;
+  costo_twilio_usd: number;
   costo_detalle: { product: string; cost_cents: number }[] | null;
   created_at: string;
 }
@@ -119,6 +120,10 @@ export interface KpiResumen {
   visitas_proximas: number;
   llamadas_24h: number;
   propiedades_disponibles: number;
+  costo_retell_24h_usd: number;
+  costo_twilio_24h_usd: number;
   costo_24h_usd: number;
+  costo_retell_total_usd: number;
+  costo_twilio_total_usd: number;
   costo_total_usd: number;
 }
