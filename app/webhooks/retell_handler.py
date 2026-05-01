@@ -1,6 +1,6 @@
 import json
 
-from app.services import anthropic_service, notion_service, retell_service
+from app.services import anthropic_service, supabase_service, retell_service
 
 
 def _extract_call_id(data: dict) -> str:
@@ -92,7 +92,7 @@ def process_post_call(call_id: str) -> dict:
     nombre = analysis.get("nombre_cliente", "") or "Cliente"
 
     # 3. Registrar llamada en historial
-    call_record = notion_service.create_call_record(
+    call_record = supabase_service.create_call_record(
         titulo=f"{tipo_llamada} — {nombre}",
         tipo=tipo_llamada,
         resultado="Contestada",
@@ -100,6 +100,7 @@ def process_post_call(call_id: str) -> dict:
         nombre_lead=nombre,
         duracion_seg=duration_sec,
         resumen=analysis.get("resumen", ""),
+        transcripcion=transcript,
         sentimiento=analysis.get("sentimiento", "Neutral"),
         cita_agendada=analysis.get("cita_agendada", False),
         retell_call_id=call_id,
@@ -108,10 +109,10 @@ def process_post_call(call_id: str) -> dict:
     # 4. Crear o actualizar lead
     lead_id = None
     if phone:
-        existing = notion_service.find_lead_by_phone(phone)
+        existing = supabase_service.find_lead_by_phone(phone)
         if existing:
             lead_id = existing["id"]
-            notion_service.update_lead(
+            supabase_service.update_lead(
                 page_id=lead_id,
                 temperatura=analysis.get("temperatura", "Warm"),
                 resumen_ia=analysis.get("resumen", ""),
@@ -119,7 +120,7 @@ def process_post_call(call_id: str) -> dict:
                 estatus="Cita agendada" if analysis.get("cita_agendada") else None,
             )
         else:
-            lead = notion_service.create_lead(
+            lead = supabase_service.create_lead(
                 name=nombre,
                 phone=phone,
                 presupuesto=analysis.get("presupuesto"),

@@ -2,7 +2,7 @@
 
 import time
 
-from app.services import notion_service, retell_service
+from app.services import supabase_service, retell_service
 
 
 def run_outbound_cycle() -> dict:
@@ -13,7 +13,7 @@ def run_outbound_cycle() -> dict:
     3. Dispara llamada outbound con datos personalizados
     4. Espera entre llamadas para no saturar
     """
-    leads = notion_service.get_pending_leads()
+    leads = supabase_service.get_pending_leads()
 
     if not leads:
         print("[Outbound] No hay leads pendientes de llamar.")
@@ -35,7 +35,7 @@ def run_outbound_cycle() -> dict:
 
         # Cambiar estatus ANTES de llamar para no duplicar
         try:
-            notion_service.update_lead(
+            supabase_service.update_lead(
                 page_id=lead_id,
                 estatus="En proceso",
                 intentos=int(lead["intentos"]) + 1,
@@ -46,7 +46,7 @@ def run_outbound_cycle() -> dict:
             continue
 
         # Preparar variables dinámicas
-        zonas = ", ".join(lead["zona_interes"]) if lead["zona_interes"] else "Ciudad de México"
+        zonas = ", ".join(lead["zona_interes"]) if lead["zona_interes"] else "Santiago"
         tipos = ", ".join(lead["tipo_buscado"]) if lead["tipo_buscado"] else "propiedad"
         presupuesto = f"${lead['presupuesto']:,.0f}" if lead["presupuesto"] else "no especificado"
 
@@ -67,7 +67,7 @@ def run_outbound_cycle() -> dict:
             errors.append({"lead": nombre, "error": str(e)})
             # Revertir estatus si la llamada falló
             try:
-                notion_service.update_lead(page_id=lead_id, estatus="Pendiente de llamar")
+                supabase_service.update_lead(page_id=lead_id, estatus="Pendiente de llamar")
             except Exception:
                 pass
             continue

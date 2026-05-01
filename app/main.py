@@ -7,7 +7,7 @@ image = modal.Image.debian_slim(python_version="3.11").pip_install(
     "retell-sdk>=5.0.0",
     "twilio>=9.0.0",
     "anthropic>=0.42.0",
-    "notion-client>=2.2.0,<3.0.0",
+    "supabase>=2.7.0",
     "requests>=2.32.0",
     "python-dotenv>=1.0.0",
     "fastapi>=0.115.0",
@@ -37,10 +37,10 @@ def twilio_webhook(request: dict):
 
 @web_app.post("/search-properties")
 def search_properties(request: dict):
-    from app.services.notion_service import search_properties as _search
+    from app.services import supabase_service
 
     args = request.get("args", request)
-    results = _search(
+    results = supabase_service.search_properties(
         zona=args.get("zona"),
         presupuesto_max=args.get("presupuesto_max"),
         recamaras_min=args.get("recamaras_min"),
@@ -52,10 +52,10 @@ def search_properties(request: dict):
 
 @web_app.post("/create-lead")
 def create_lead(request: dict):
-    from app.services.notion_service import create_lead as _create
+    from app.services import supabase_service
 
     args = request.get("args", request)
-    lead = _create(
+    lead = supabase_service.create_lead(
         name=args.get("name", ""),
         phone=args.get("phone", ""),
         email=args.get("email", ""),
@@ -71,43 +71,27 @@ def create_lead(request: dict):
 
 @web_app.post("/book-visit")
 def book_visit(request: dict):
-    from app.services.calcom_service import create_booking, get_available_slots
-    from app.services.notion_service import find_lead_by_phone, update_lead
+    from app.services import supabase_service
 
     args = request.get("args", request)
     phone = args.get("phone", "")
     name = args.get("name", "")
-    email = args.get("email", "cliente@inmobiliaria.com")
-    event_type_id = int(args.get("event_type_id", 0))
+    propiedad_id = args.get("propiedad_id")
     preferred_date = args.get("preferred_date", "")
     preferred_time = args.get("preferred_time", "")
 
     if preferred_date and preferred_time:
-        start = f"{preferred_date}T{preferred_time}:00"
-        booking = create_booking(
-            event_type_id=event_type_id,
-            start=start,
+        booking = supabase_service.book_visit(
+            phone=phone,
             name=name,
-            email=email,
+            preferred_date=preferred_date,
+            preferred_time=preferred_time,
+            propiedad_id=propiedad_id,
         )
-
-        if phone:
-            lead = find_lead_by_phone(phone)
-            if lead:
-                update_lead(
-                    page_id=lead["id"],
-                    estatus="Cita agendada",
-                    siguiente_accion=f"Visita agendada: {preferred_date} {preferred_time}",
-                )
-
         return {"status": "ok", "booking": booking}
 
     if preferred_date:
-        slots = get_available_slots(
-            event_type_id=event_type_id,
-            start_date=preferred_date,
-            end_date=preferred_date,
-        )
+        slots = supabase_service.get_available_slots(preferred_date)
         return {"status": "ok", "available_slots": slots}
 
     return {"status": "error", "message": "Se necesita al menos preferred_date"}
@@ -115,14 +99,14 @@ def book_visit(request: dict):
 
 @web_app.post("/update-lead-status")
 def update_lead_status(request: dict):
-    from app.services.notion_service import find_lead_by_phone, update_lead
+    from app.services import supabase_service
 
     args = request.get("args", request)
     phone = args.get("phone", "")
     page_id = args.get("lead_id", "")
 
     if not page_id and phone:
-        lead = find_lead_by_phone(phone)
+        lead = supabase_service.find_lead_by_phone(phone)
         if not lead:
             return {"status": "error", "message": f"No se encontró lead con teléfono {phone}"}
         page_id = lead["id"]
@@ -130,7 +114,7 @@ def update_lead_status(request: dict):
     if not page_id:
         return {"status": "error", "message": "Se necesita phone o lead_id"}
 
-    result = update_lead(
+    result = supabase_service.update_lead(
         page_id=page_id,
         estatus=args.get("estatus"),
         temperatura=args.get("temperatura"),

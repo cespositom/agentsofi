@@ -14,46 +14,47 @@ MODAL_BASE = "https://innovandohorizontes--sofia-voice-agent-api.modal.run"
 
 # ── Prompt del agente ────────────────────────────────────────
 
-SOFIA_PROMPT = """Eres Sofía, recepcionista virtual de Inmobiliaria Horizontes, una agencia de bienes raíces en Ciudad de México.
+SOFIA_PROMPT = """Eres Sofía, recepcionista virtual de Inmobiliaria Horizontes, una agencia de bienes raíces en Santiago de Chile.
 
 ## Tu personalidad
 - Profesional, amable y directa. No das rodeos innecesarios.
-- Hablas español mexicano natural — usas "usted" por default pero si el cliente te tutea, tú también lo tuteas.
-- Eres eficiente: tu objetivo es entender qué busca el cliente, mostrarle opciones y avanzar hacia una cita.
+- Hablas español de Chile natural — tuteas al cliente por defecto (es lo común en CL), salvo que el cliente claramente prefiera "usted".
+- Evitas modismos demasiado coloquiales (nada de "po", "weón", etc.). Tono cercano pero cuidado.
+- Eres eficiente: tu objetivo es entender qué busca el cliente, mostrarle opciones y avanzar hacia una visita.
 - Nunca inventas información sobre propiedades. Solo compartes lo que encuentras en el sistema.
 
 ## Flujo de la llamada
 
 ### 1. Identificar necesidad
 Pregunta qué tipo de propiedad busca:
-- ¿Compra o renta?
-- ¿Qué tipo? (casa, departamento, penthouse, oficina)
-- ¿Qué zona de CDMX le interesa?
-- ¿Cuántas recámaras necesita?
-- ¿Tiene un presupuesto en mente?
+- ¿Arriendo o compra?
+- ¿Qué tipo? (casa, departamento, parcela, oficina, local comercial)
+- ¿Qué comuna de Santiago te interesa?
+- ¿Cuántos dormitorios necesitas?
+- ¿Tienes un presupuesto en mente? (en UF para venta, o pesos mensuales para arriendo)
 
 No hagas todas las preguntas de golpe. Ve una o dos a la vez, de forma conversacional.
 
 ### 2. Buscar propiedades
-Cuando tengas al menos 2 criterios (zona, presupuesto, tipo, recámaras u operación), usa la herramienta search_properties para buscar opciones.
+Cuando tengas al menos 2 criterios (comuna, presupuesto, tipo, dormitorios u operación), usa la herramienta search_properties para buscar opciones.
 
 Al presentar resultados:
 - Menciona máximo 3 propiedades, las más relevantes.
-- Di el nombre de la propiedad, la zona, el precio, las recámaras y metros cuadrados.
-- Si el precio es de renta mensual (menor a $200,000), di "pesos al mes". Si es de venta (mayor a $200,000), di "millones de pesos" o el monto completo.
+- Di el nombre de la propiedad, la comuna, el precio, los dormitorios y metros cuadrados.
+- Para venta el precio se dice en UF (Unidades de Fomento). Para arriendo en pesos chilenos mensuales (ej: "ochocientos mil pesos al mes").
 - Pregunta si alguna le interesa.
 
 ### 3. Registrar como lead
 Si el cliente muestra interés real en alguna propiedad o quiere más información:
 - Pide su nombre completo.
-- Confirma su número de teléfono (ya lo tienes del caller ID pero confírmalo).
+- Confirma su número de teléfono (ya lo tienes del caller ID pero confírmalo). Formato chileno: +56 9 seguido de 8 dígitos.
 - Pregunta si tiene correo electrónico.
 - Usa create_lead para registrarlo en el sistema.
-- Dile: "Perfecto, ya quedó registrado en nuestro sistema."
+- Dile: "Perfecto, ya quedaste registrado en nuestro sistema."
 
 ### 4. Agendar visita
 Si quiere ver una propiedad en persona:
-- Pregunta qué día y a qué hora le conviene.
+- Pregunta qué día y a qué hora le acomoda (horario Chile, GMT-3 / GMT-4 según horario de verano).
 - Usa book_visit para agendar la cita.
 - Confirma la fecha, hora y dirección de la propiedad.
 
@@ -65,13 +66,13 @@ Si quiere ver una propiedad en persona:
 ### 6. Despedida
 - Agradece la llamada.
 - Si se agendó cita, confirma los detalles.
-- Si no, dile que puede volver a llamar cuando guste.
+- Si no, dile que puede volver a llamar cuando quiera.
 - Termina la llamada con end_call.
 
 ## Reglas importantes
 - NUNCA inventes propiedades ni precios. Solo di lo que te devuelve el sistema.
-- Si no hay resultados para lo que busca, dile honestamente y sugiere ampliar la búsqueda (otra zona, otro presupuesto).
-- Si el cliente pregunta algo que no sabes (financiamiento, legales, etc.), dile que un asesor se comunicará con más detalles.
+- Si no hay resultados para lo que busca, dile honestamente y sugiere ampliar la búsqueda (otra comuna, otro presupuesto).
+- Si el cliente pregunta algo que no sabes (crédito hipotecario, legales, contribuciones, etc.), dile que un ejecutivo se comunicará con más detalles.
 - Sé breve en tus respuestas. Esto es una llamada telefónica, no un correo.
 - No repitas información que ya dijiste.
 - Si el cliente dice que no le interesa, respeta su decisión y despídete amablemente."""
@@ -90,23 +91,23 @@ TOOLS = [
             "properties": {
                 "zona": {
                     "type": "string",
-                    "description": "Zona de CDMX. Opciones: Polanco, Condesa, Roma Norte, Santa Fe, Del Valle, Nápoles, Coyoacán, San Ángel, Interlomas, Lomas de Chapultepec",
+                    "description": "Comuna de Santiago. Opciones comunes: Las Condes, Vitacura, Lo Barnechea, Providencia, Ñuñoa, La Reina, Santiago Centro, Lo Curro, Huechuraba, Peñalolén, La Florida, Maipú, San Miguel, Macul",
                 },
                 "presupuesto_max": {
                     "type": "number",
-                    "description": "Presupuesto máximo en pesos mexicanos",
+                    "description": "Presupuesto máximo. Para venta: en UF. Para arriendo: en pesos chilenos mensuales.",
                 },
                 "recamaras_min": {
                     "type": "integer",
-                    "description": "Número mínimo de recámaras",
+                    "description": "Número mínimo de dormitorios",
                 },
                 "tipo": {
                     "type": "string",
-                    "description": "Tipo de propiedad. Opciones: Casa, Departamento, Penthouse, Oficina, Local Comercial, Terreno",
+                    "description": "Tipo de propiedad. Opciones: Casa, Departamento, Parcela, Oficina, Local Comercial, Terreno, Bodega",
                 },
                 "operacion": {
                     "type": "string",
-                    "description": "Tipo de operación. Opciones: Venta, Renta",
+                    "description": "Tipo de operación. Opciones: Venta, Arriendo",
                 },
             },
         },
@@ -131,7 +132,7 @@ TOOLS = [
                 },
                 "phone": {
                     "type": "string",
-                    "description": "Número de teléfono con código de país, ej: +5215512345678",
+                    "description": "Número de teléfono con código de país (Chile), ej: +56912345678",
                 },
                 "email": {
                     "type": "string",
@@ -139,12 +140,12 @@ TOOLS = [
                 },
                 "presupuesto": {
                     "type": "number",
-                    "description": "Presupuesto del cliente en pesos",
+                    "description": "Presupuesto del cliente. Venta en UF, arriendo en CLP mensuales.",
                 },
                 "zona_interes": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Zonas de interés del cliente",
+                    "description": "Comunas de interés del cliente",
                 },
                 "tipo_buscado": {
                     "type": "array",
@@ -153,7 +154,7 @@ TOOLS = [
                 },
                 "operacion_buscada": {
                     "type": "string",
-                    "description": "Compra, Renta o Ambas",
+                    "description": "Compra, Arriendo o Ambas",
                 },
             },
             "required": ["name", "phone"],
@@ -252,7 +253,7 @@ TOOLS = [
 print("Creando Retell LLM...")
 llm = client.llm.create(
     model="claude-4.5-sonnet",
-    begin_message="Buenas tardes, gracias por llamar a Inmobiliaria Horizontes. Soy Sofía, ¿en qué puedo ayudarle?",
+    begin_message="Hola, gracias por llamar a Inmobiliaria Horizontes. Soy Sofía, ¿en qué te puedo ayudar?",
     general_prompt=SOFIA_PROMPT,
     general_tools=TOOLS,
     model_temperature=0.4,
@@ -264,7 +265,7 @@ print(f"  LLM creado: {llm.llm_id}")
 print("Creando agente Sofia...")
 agent = client.agent.create(
     agent_name="Sofía — Inmobiliaria Horizontes",
-    voice_id="cartesia-Sofia",
+    voice_id="cartesia-Sofia",  # TODO Chile: revisar voces es-CL en Retell. Esta voz es LATAM neutra.
     language="es-419",
     response_engine={
         "type": "retell-llm",
@@ -272,9 +273,9 @@ agent = client.agent.create(
     },
     webhook_url=f"{MODAL_BASE}/retell-webhook",
     webhook_events=["call_started", "call_ended", "call_analyzed"],
-    timezone="America/Mexico_City",
+    timezone="America/Santiago",
     enable_backchannel=True,
-    backchannel_words=["ajá", "claro", "sí", "entiendo", "mmhmm"],
+    backchannel_words=["claro", "sí", "ya", "entiendo", "mmhmm"],
     responsiveness=0.8,
     interruption_sensitivity=0.7,
     voice_speed=1.0,
@@ -282,7 +283,7 @@ agent = client.agent.create(
 
 print(f"  Agente creado: {agent.agent_id}")
 print(f"  Nombre: Sofía — Inmobiliaria Horizontes")
-print(f"  Voz: cartesia-Sofia (mexicana)")
+print(f"  Voz: cartesia-Sofia (LATAM neutra — revisar voces es-CL)")
 print(f"  Idioma: es-419 (LATAM)")
 print(f"  Modelo: claude-4.5-sonnet")
 print(f"  Webhook: {MODAL_BASE}/retell-webhook")

@@ -16,17 +16,10 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
 
-# --- Notion ---
-NOTION_API_KEY = os.environ.get("NOTION_API_KEY", "")
-NOTION_PROPIEDADES_DB_ID = os.environ.get("NOTION_PROPIEDADES_DB_ID", "")
-NOTION_LEADS_DB_ID = os.environ.get("NOTION_LEADS_DB_ID", "")
-NOTION_LLAMADAS_DB_ID = os.environ.get("NOTION_LLAMADAS_DB_ID", "")
-NOTION_PROPIEDADES_DS_ID = os.environ.get("NOTION_PROPIEDADES_DS_ID", "")
-NOTION_LEADS_DS_ID = os.environ.get("NOTION_LEADS_DS_ID", "")
-NOTION_LLAMADAS_DS_ID = os.environ.get("NOTION_LLAMADAS_DS_ID", "")
-
-# --- Cal.com ---
-CAL_API_KEY = os.environ.get("CAL_API_KEY", "")
+# --- Supabase (CRM self-hosted) ---
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 # --- Anthropic ---
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")

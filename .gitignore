@@ -3,8 +3,13 @@
 __pycache__/
 *.pyc
 .modal/
+.venv/
+venv/
+*.egg-info/
 node_modules/
 .next/
 dashboard/.env.local
 dashboard/node_modules/
 dashboard/.next/
+.DS_Store
+Thumbs.db

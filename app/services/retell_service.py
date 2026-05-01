@@ -36,7 +36,7 @@ def create_phone_call(to_number: str, agent_id: str) -> dict:
 def create_outbound_call(
     to_number: str,
     lead_name: str = "Cliente",
-    zona_interes: str = "Ciudad de México",
+    zona_interes: str = "Santiago",
     tipo_buscado: str = "propiedad",
     presupuesto: str = "no especificado",
     notas: str = "ninguno",

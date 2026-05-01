@@ -31,7 +31,7 @@ def analyze_call(transcript: str) -> dict:
         messages=[
             {
                 "role": "user",
-                "content": f"""Eres un analista CRM de una inmobiliaria en Ciudad de México. Analiza esta transcripción de llamada entre nuestra agente de voz "Sofía" y un cliente.
+                "content": f"""Eres un analista CRM de una inmobiliaria en Santiago de Chile. Analiza esta transcripción de llamada entre nuestra agente de voz "Sofía" y un cliente.
 
 Responde ÚNICAMENTE con un JSON válido (sin markdown, sin backticks) con esta estructura exacta:
 

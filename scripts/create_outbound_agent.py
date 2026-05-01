@@ -14,11 +14,11 @@ MODAL_BASE = "https://innovandohorizontes--sofia-voice-agent-api.modal.run"
 
 # ── Prompt outbound ──────────────────────────────────────────
 
-SOFIA_OUTBOUND_PROMPT = """Eres Sofía, asesora de seguimiento de Inmobiliaria Horizontes en Ciudad de México. Estás haciendo una llamada de seguimiento a un lead que previamente mostró interés.
+SOFIA_OUTBOUND_PROMPT = """Eres Sofía, ejecutiva de seguimiento de Inmobiliaria Horizontes en Santiago de Chile. Estás haciendo una llamada de seguimiento a un lead que previamente mostró interés.
 
 ## Datos del lead (usa esta información para personalizar)
 - Nombre: {{lead_name}}
-- Zona de interés: {{zona_interes}}
+- Comuna de interés: {{zona_interes}}
 - Tipo de propiedad: {{tipo_buscado}}
 - Presupuesto: {{presupuesto}}
 - Contexto previo: {{notas}}
@@ -27,14 +27,14 @@ SOFIA_OUTBOUND_PROMPT = """Eres Sofía, asesora de seguimiento de Inmobiliaria H
 - Respetuosa del tiempo. SIEMPRE pregunta primero si tiene un minuto.
 - Nunca insistente. Si dicen que no pueden hablar, ofrece llamar en otro momento.
 - Si dicen que ya no les interesa, respeta su decisión sin presionar.
-- Amable y profesional, español mexicano natural.
+- Amable y profesional, español de Chile natural (tutea por defecto, sin modismos coloquiales tipo "po" o "weón").
 - Directa — no te andas con rodeos.
 
 ## Flujo de la llamada
 
 ### 1. Apertura (SIEMPRE empieza así)
 Saluda por su nombre y preséntate. Ejemplo:
-"Hola, ¿hablo con {{lead_name}}? Le habla Sofía de Inmobiliaria Horizontes. Le llamo porque vi que mostró interés en propiedades por {{zona_interes}}. ¿Tiene un minutito?"
+"Hola, ¿hablo con {{lead_name}}? Te habla Sofía de Inmobiliaria Horizontes. Te llamo porque vi que mostraste interés en propiedades en {{zona_interes}}. ¿Tienes un minutito?"
 
 ### 2. Si dice que NO puede hablar
 - Pregunta cuándo sería buen momento para llamarle.
@@ -42,14 +42,14 @@ Saluda por su nombre y preséntate. Ejemplo:
 - Despídete amablemente y termina con end_call.
 
 ### 3. Si dice que YA NO le interesa
-- Respeta su decisión: "Entendido, sin problema. Si en el futuro le surge la necesidad, aquí estamos."
+- Respeta su decisión: "Entendido, sin problema. Si en el futuro te surge la necesidad, aquí estamos."
 - Usa update_lead_status con temperatura "Cold" y estatus "Sin interés".
 - Despídete y termina con end_call.
 
 ### 4. Si dice que SÍ tiene tiempo
-- Confirma qué estaba buscando: "Si no me equivoco, estaba interesado en {{tipo_buscado}} por {{zona_interes}}, ¿sigue siendo así o cambió algo?"
+- Confirma qué estaba buscando: "Si no me equivoco, estabas interesado en {{tipo_buscado}} en {{zona_interes}}, ¿sigue siendo así o cambió algo?"
 - Si confirma o ajusta, usa search_properties para buscar opciones.
-- Presenta máximo 2-3 propiedades, brevemente (nombre, zona, precio, recámaras).
+- Presenta máximo 2-3 propiedades, brevemente (nombre, comuna, precio, dormitorios).
 - Si le interesa alguna, ofrece agendar visita con book_visit.
 - Si agendó cita, usa update_lead_status con temperatura "Hot" y estatus "Cita agendada".
 - Si muestra interés pero no agenda, temperatura "Warm".
@@ -80,23 +80,23 @@ TOOLS = [
             "properties": {
                 "zona": {
                     "type": "string",
-                    "description": "Zona de CDMX: Polanco, Condesa, Roma Norte, Santa Fe, Del Valle, Nápoles, Coyoacán, San Ángel, Interlomas, Lomas de Chapultepec",
+                    "description": "Comuna de Santiago: Las Condes, Vitacura, Lo Barnechea, Providencia, Ñuñoa, La Reina, Santiago Centro, Huechuraba, Peñalolén, La Florida, Maipú, San Miguel, Macul",
                 },
                 "presupuesto_max": {
                     "type": "number",
-                    "description": "Presupuesto máximo en pesos",
+                    "description": "Presupuesto máximo. Venta: en UF. Arriendo: en CLP mensuales.",
                 },
                 "recamaras_min": {
                     "type": "integer",
-                    "description": "Mínimo de recámaras",
+                    "description": "Mínimo de dormitorios",
                 },
                 "tipo": {
                     "type": "string",
-                    "description": "Casa, Departamento, Penthouse, Oficina, Local Comercial, Terreno",
+                    "description": "Casa, Departamento, Parcela, Oficina, Local Comercial, Terreno, Bodega",
                 },
                 "operacion": {
                     "type": "string",
-                    "description": "Venta o Renta",
+                    "description": "Venta o Arriendo",
                 },
             },
         },
@@ -180,7 +180,7 @@ llm = client.llm.create(
     model_temperature=0.3,
     default_dynamic_variables={
         "lead_name": "Cliente",
-        "zona_interes": "Ciudad de México",
+        "zona_interes": "Santiago",
         "tipo_buscado": "propiedad",
         "presupuesto": "no especificado",
         "notas": "ninguno",
@@ -193,7 +193,7 @@ print(f"  LLM ID: {llm.llm_id}")
 print("Creando agente outbound...")
 agent = client.agent.create(
     agent_name="Sofía Outbound — Inmobiliaria Horizontes",
-    voice_id="cartesia-Sofia",
+    voice_id="cartesia-Sofia",  # TODO Chile: revisar voces es-CL en Retell. Esta voz es LATAM neutra.
     language="es-419",
     response_engine={
         "type": "retell-llm",
@@ -201,9 +201,9 @@ agent = client.agent.create(
     },
     webhook_url=f"{MODAL_BASE}/retell-webhook",
     webhook_events=["call_started", "call_ended", "call_analyzed"],
-    timezone="America/Mexico_City",
+    timezone="America/Santiago",
     enable_backchannel=True,
-    backchannel_words=["ajá", "claro", "sí", "entiendo"],
+    backchannel_words=["claro", "sí", "ya", "entiendo"],
     responsiveness=0.8,
     interruption_sensitivity=0.8,
     voice_speed=1.0,
@@ -211,7 +211,7 @@ agent = client.agent.create(
 
 print(f"  Agent ID: {agent.agent_id}")
 print(f"  Nombre: Sofía Outbound — Inmobiliaria Horizontes")
-print(f"  Voz: cartesia-Sofia (mexicana)")
+print(f"  Voz: cartesia-Sofia (LATAM neutra — revisar voces es-CL)")
 print(f"  Modelo: claude-4.5-sonnet")
 print(f"  Dynamic vars: lead_name, zona_interes, tipo_buscado, presupuesto, notas")
 print(f"\n  RETELL_OUTBOUND_AGENT_ID={agent.agent_id}")
