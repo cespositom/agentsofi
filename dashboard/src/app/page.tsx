@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Shell } from "@/components/shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fmtFechaCL } from "@/lib/format";
+import { fmtFechaCL, fmtUSD } from "@/lib/format";
 import type { KpiResumen, Llamada, Visita } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +42,8 @@ export default async function DashboardPage() {
     { label: "Visitas próximas", value: kpi?.visitas_proximas ?? 0, hint: "agendadas" },
     { label: "Llamadas 24h", value: kpi?.llamadas_24h ?? 0, hint: "últimas" },
     { label: "Propiedades", value: kpi?.propiedades_disponibles ?? 0, hint: "disponibles" },
+    { label: "Costo 24h", value: fmtUSD(kpi?.costo_24h_usd ?? 0), hint: "Retell + Twilio" },
+    { label: "Costo total", value: fmtUSD(kpi?.costo_total_usd ?? 0), hint: "histórico" },
   ];
 
   return (
@@ -54,7 +56,7 @@ export default async function DashboardPage() {
           </p>
         </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {tiles.map((t) => (
             <Card key={t.label} className="border-white/[0.06] bg-white/[0.02]">
               <CardContent className="p-4">

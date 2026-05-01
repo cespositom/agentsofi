@@ -14,6 +14,15 @@ export function fmtPrecio(precio: number, operacion: string) {
   return operacion === "Venta" ? fmtUF(precio) : `${fmtCLP(precio)}/mes`;
 }
 
+export function fmtUSD(n: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(n || 0);
+}
+
 export function fmtFechaCL(iso: string) {
   return new Date(iso).toLocaleString("es-CL", {
     timeZone: "America/Santiago",

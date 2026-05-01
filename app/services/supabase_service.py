@@ -200,6 +200,8 @@ def create_call_record(
     sentimiento: str = "Neutral",
     cita_agendada: bool = False,
     retell_call_id: str = "",
+    costo_usd: float = 0,
+    costo_detalle: list | None = None,
 ) -> dict:
     lead = find_lead_by_phone(telefono) if telefono else None
 
@@ -212,6 +214,7 @@ def create_call_record(
         "duracion_seg": duracion_seg,
         "sentimiento": sentimiento,
         "cita_agendada": cita_agendada,
+        "costo_usd": costo_usd,
     }
     if resumen:
         payload["resumen"] = resumen[:4000]
@@ -221,6 +224,8 @@ def create_call_record(
         payload["retell_call_id"] = retell_call_id
     if lead:
         payload["lead_id"] = lead["id"]
+    if costo_detalle:
+        payload["costo_detalle"] = costo_detalle
 
     res = _sb().table("llamadas").upsert(payload, on_conflict="retell_call_id").execute()
     row = res.data[0] if res.data else {}

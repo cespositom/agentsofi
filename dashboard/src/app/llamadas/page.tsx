@@ -2,7 +2,7 @@ import { Shell } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { fmtFechaCL } from "@/lib/format";
+import { fmtFechaCL, fmtUSD } from "@/lib/format";
 import type { Llamada } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +92,11 @@ export default async function LlamadasPage() {
                     {call.retell_call_id && (
                       <span className="font-mono">
                         ID: {call.retell_call_id.slice(0, 20)}...
+                      </span>
+                    )}
+                    {call.costo_usd > 0 && (
+                      <span className="text-amber-400">
+                        Costo: {fmtUSD(call.costo_usd)}
                       </span>
                     )}
                   </div>

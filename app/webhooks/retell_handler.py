@@ -104,6 +104,8 @@ def process_post_call(call_id: str) -> dict:
         sentimiento=analysis.get("sentimiento", "Neutral"),
         cita_agendada=analysis.get("cita_agendada", False),
         retell_call_id=call_id,
+        costo_usd=call_data.get("costo_usd", 0),
+        costo_detalle=call_data.get("costo_detalle"),
     )
 
     # 4. Crear o actualizar lead
