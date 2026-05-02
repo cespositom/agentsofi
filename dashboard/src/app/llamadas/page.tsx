@@ -106,12 +106,9 @@ export default async function LlamadasPage() {
                         {call.carrier}
                       </Badge>
                     )}
-                    {(call.costo_retell_usd > 0 || call.costo_twilio_usd > 0) && (
-                      <span className="text-amber-400">
-                        Retell {fmtUSD(call.costo_retell_usd)} · {call.carrier ?? "carrier"} {fmtUSD(call.costo_twilio_usd)} · Total {fmtUSD(call.costo_retell_usd + call.costo_twilio_usd)}
-                      </span>
-                    )}
                   </div>
+
+                  <CallCostBreakdown call={call} />
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs text-neutral-500">
@@ -126,3 +123,83 @@ export default async function LlamadasPage() {
     </Shell>
   );
 }
+
+function CallCostBreakdown({ call }: { call: Llamada }) {
+  const totalRetell = call.costo_retell_usd ?? 0;
+  const totalCarrier = call.costo_twilio_usd ?? 0;
+  const total = totalRetell + totalCarrier;
+  const minutos = call.duracion_seg / 60;
+  const ratePerMin = minutos > 0 ? total / minutos : 0;
+
+  const detalle = call.costo_detalle ?? [];
+
+  if (total === 0 && detalle.length === 0) return null;
+
+  // Mapeo de product → label más legible
+  const labelProduct: Record<string, string> = {
+    voice_engine: "Voz (TTS)",
+    cartesia_tts: "Voz Cartesia",
+    elevenlabs_tts: "Voz ElevenLabs",
+    retell_tts: "Voz Retell",
+    deepgram_stt: "Transcripción (STT)",
+    nova_2_stt: "Transcripción Nova",
+    claude_4_5_haiku: "LLM Claude Haiku",
+    claude_4_5_sonnet: "LLM Claude Sonnet",
+    gpt_4o_mini: "LLM GPT-4o mini",
+    response_engine: "LLM",
+    telephony: "Telefonía",
+  };
+
+  return (
+    <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2.5 text-[11px]">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="uppercase tracking-wider text-amber-500/70 font-medium">
+          Costo de la llamada
+        </span>
+        <span className="text-amber-300 font-semibold text-sm">
+          {fmtUSD(total)}
+          {ratePerMin > 0 && (
+            <span className="ml-2 text-[10px] text-amber-500/60 font-normal">
+              ({fmtUSD(ratePerMin)}/min)
+            </span>
+          )}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-neutral-400">
+        <div>
+          <div className="flex justify-between">
+            <span>Retell (LLM + TTS + STT)</span>
+            <span className="text-amber-400/80">{fmtUSD(totalRetell)}</span>
+          </div>
+          {detalle.length > 0 && (
+            <ul className="mt-1 ml-2 space-y-0.5 text-[10px] text-neutral-500">
+              {detalle.map((d, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>· {labelProduct[d.product] ?? d.product}</span>
+                  <span>{fmtUSD(d.cost_cents / 100)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <div className="flex justify-between">
+            <span>
+              Telefonía{" "}
+              <span className="text-neutral-600">
+                ({call.carrier ?? "—"})
+              </span>
+            </span>
+            <span className="text-amber-400/80">{fmtUSD(totalCarrier)}</span>
+          </div>
+          <div className="mt-1 ml-2 text-[10px] text-neutral-500">
+            · {Math.round(minutos * 60)}s × tarifa estimada
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
