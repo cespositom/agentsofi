@@ -50,7 +50,7 @@ def run_outbound_cycle() -> dict:
         tipos = ", ".join(lead["tipo_buscado"]) if lead["tipo_buscado"] else "propiedad"
         presupuesto = f"${lead['presupuesto']:,.0f}" if lead["presupuesto"] else "no especificado"
 
-        # Disparar llamada
+        # Disparar llamada (con failover entre carriers)
         try:
             result = retell_service.create_outbound_call(
                 to_number=telefono,
@@ -61,7 +61,8 @@ def run_outbound_cycle() -> dict:
                 notas=lead["notas"] or "Lead nuevo, primer contacto outbound",
             )
             calls_made += 1
-            print(f"[Outbound] Llamada {calls_made}: {nombre} ({telefono}) → call_id={result['call_id']}")
+            print(f"[Outbound] Llamada {calls_made}: {nombre} ({telefono}) → "
+                  f"call_id={result['call_id']} via {result.get('carrier','?')}")
         except Exception as e:
             print(f"[Outbound] Error llamando a {nombre}: {e}")
             errors.append({"lead": nombre, "error": str(e)})

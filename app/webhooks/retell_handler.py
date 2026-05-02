@@ -91,6 +91,18 @@ def process_post_call(call_id: str) -> dict:
     tipo_llamada = "Inbound" if "inbound" in direction.lower() else "Outbound"
     nombre = analysis.get("nombre_cliente", "") or "Cliente"
 
+    # Inferir carrier por el from_number (si matchea TWILIO_PHONE_NUMBER -> twilio,
+    # si matchea TELNYX_PHONE_NUMBER -> telnyx). Fallback: PRIMARY_CARRIER del env.
+    import os
+    from_n = call_data.get("from_number", "") or ""
+    carrier = "twilio"
+    if from_n and from_n == os.environ.get("TELNYX_PHONE_NUMBER", ""):
+        carrier = "telnyx"
+    elif from_n and from_n == os.environ.get("TWILIO_PHONE_NUMBER", ""):
+        carrier = "twilio"
+    else:
+        carrier = (os.environ.get("PRIMARY_CARRIER") or "twilio").lower()
+
     # 3. Registrar llamada en historial
     call_record = supabase_service.create_call_record(
         titulo=f"{tipo_llamada} — {nombre}",
@@ -106,6 +118,7 @@ def process_post_call(call_id: str) -> dict:
         retell_call_id=call_id,
         costo_usd=call_data.get("costo_usd", 0),
         costo_detalle=call_data.get("costo_detalle"),
+        carrier=carrier,
     )
 
     # 4. Crear o actualizar lead

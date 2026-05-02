@@ -94,9 +94,21 @@ export default async function LlamadasPage() {
                         ID: {call.retell_call_id.slice(0, 20)}...
                       </span>
                     )}
+                    {call.carrier && (
+                      <Badge
+                        variant="outline"
+                        className={
+                          call.carrier === "telnyx"
+                            ? "border-purple-500/30 text-purple-400 text-[10px]"
+                            : "border-rose-500/30 text-rose-400 text-[10px]"
+                        }
+                      >
+                        {call.carrier}
+                      </Badge>
+                    )}
                     {(call.costo_retell_usd > 0 || call.costo_twilio_usd > 0) && (
                       <span className="text-amber-400">
-                        Retell {fmtUSD(call.costo_retell_usd)} · Twilio {fmtUSD(call.costo_twilio_usd)} · Total {fmtUSD(call.costo_retell_usd + call.costo_twilio_usd)}
+                        Retell {fmtUSD(call.costo_retell_usd)} · {call.carrier ?? "carrier"} {fmtUSD(call.costo_twilio_usd)} · Total {fmtUSD(call.costo_retell_usd + call.costo_twilio_usd)}
                       </span>
                     )}
                   </div>

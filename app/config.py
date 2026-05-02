@@ -16,6 +16,15 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER", "")
 
+# --- Telnyx (segundo carrier opcional) ---
+TELNYX_PHONE_NUMBER = os.environ.get("TELNYX_PHONE_NUMBER", "")
+
+# --- Routing multi-carrier ---
+# PRIMARY_CARRIER: "twilio" | "telnyx"   (cuál usa por default)
+# FALLBACK_CARRIER: "twilio" | "telnyx" | ""  (vacío = sin failover)
+PRIMARY_CARRIER = os.environ.get("PRIMARY_CARRIER", "twilio")
+FALLBACK_CARRIER = os.environ.get("FALLBACK_CARRIER", "")
+
 # --- Supabase (CRM self-hosted) ---
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")

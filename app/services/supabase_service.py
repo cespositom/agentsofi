@@ -188,7 +188,21 @@ def update_lead(
 
 # ─── Llamadas ──────────────────────────────────────────────────
 
-TWILIO_RATE_PER_MIN_USD = 0.20  # outbound CL móvil aprox; ajustar si cambia tarifario
+# Tarifas estimadas (USD/min) por carrier y destino.
+# Edítalas si tu tarifario real difiere.
+CARRIER_RATES = {
+    "twilio": {"cl_mobile": 0.20, "cl_fixed": 0.05, "default": 0.20},
+    "telnyx": {"cl_mobile": 0.08, "cl_fixed": 0.03, "default": 0.10},
+}
+
+
+def _rate_per_min(carrier: str, to_number: str) -> float:
+    rates = CARRIER_RATES.get((carrier or "").lower(), CARRIER_RATES["twilio"])
+    if to_number.startswith("+569"):
+        return rates["cl_mobile"]
+    if to_number.startswith("+56"):
+        return rates["cl_fixed"]
+    return rates["default"]
 
 
 def create_call_record(
@@ -205,10 +219,13 @@ def create_call_record(
     retell_call_id: str = "",
     costo_usd: float = 0,
     costo_detalle: list | None = None,
+    carrier: str | None = None,
 ) -> dict:
     lead = find_lead_by_phone(telefono) if telefono else None
 
-    costo_twilio = round((duracion_seg / 60.0) * TWILIO_RATE_PER_MIN_USD, 4) if duracion_seg else 0
+    carrier_norm = (carrier or "twilio").lower()
+    rate = _rate_per_min(carrier_norm, telefono)
+    costo_telefonia = round((duracion_seg / 60.0) * rate, 4) if duracion_seg else 0
 
     payload: dict[str, Any] = {
         "titulo": titulo,
@@ -220,7 +237,10 @@ def create_call_record(
         "sentimiento": sentimiento,
         "cita_agendada": cita_agendada,
         "costo_retell_usd": costo_usd,
-        "costo_twilio_usd": costo_twilio,
+        "carrier": carrier_norm,
+        # Mantenemos el nombre histórico costo_twilio_usd para no romper UI;
+        # ahora representa "costo del carrier que efectivamente se usó".
+        "costo_twilio_usd": costo_telefonia,
     }
     if resumen:
         payload["resumen"] = resumen[:4000]
