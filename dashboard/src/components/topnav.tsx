@@ -122,7 +122,7 @@ export function TopNav({ email }: { email?: string | null }) {
       {/* Mobile drawer */}
       {open && (
         <div
-          className="md:hidden flex flex-col"
+          className="md:hidden flex flex-col sofia-mobile-drawer"
           style={{
             background: "var(--sofia-nav-bg)",
             borderBottom: "1px solid var(--sofia-nav-border)",

@@ -202,11 +202,15 @@
   font-variant-numeric: tabular-nums; line-height: 1;
 }
 
-/* Topnav */
+/* Topnav — usa Montserrat para diferenciarse del body (Inter) */
 .sofia-topnav {
   height: 52px; background: var(--sofia-nav-bg);
   border-bottom: 1px solid var(--sofia-nav-border);
   display: flex; align-items: stretch; flex-shrink: 0;
+  font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+.sofia-topnav, .sofia-topnav * {
+  font-family: inherit;
 }
 .sofia-nav-link {
   display: flex; align-items: center; gap: 7px;
@@ -215,9 +219,17 @@
   border-bottom: 2px solid transparent;
   user-select: none; transition: color 0.12s, border-color 0.12s;
   text-decoration: none;
+  font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: -0.005em;
 }
 .sofia-nav-link:hover { color: #C8D5E8; }
 .sofia-nav-link.active { color: #FFF; border-bottom-color: var(--sofia-accent); }
+
+/* Drawer mobile también con Montserrat */
+.sofia-mobile-drawer,
+.sofia-mobile-drawer * {
+  font-family: var(--font-montserrat), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
 
 /* Tabla */
 .sofia-table { width: 100%; border-collapse: collapse; }
