@@ -51,7 +51,101 @@ export default async function LlamadasPage() {
         ))}
       </div>
 
-      <div className="sofia-card overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="md:hidden flex flex-col gap-2 mb-4">
+        {calls.length === 0 && (
+          <div
+            className="sofia-card text-center py-6 text-[12px]"
+            style={{ color: "var(--sofia-muted)" }}
+          >
+            Sin llamadas todavía.
+          </div>
+        )}
+        {calls.map((c) => {
+          const total =
+            (Number(c.costo_retell_usd) || 0) +
+            (Number(c.costo_twilio_usd) || 0);
+          return (
+            <div key={c.id} className="sofia-card" style={{ padding: "14px 16px" }}>
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold truncate">
+                    {c.nombre_lead || c.titulo || "—"}
+                  </div>
+                  <div className="text-[11px] font-mono" style={{ color: "var(--sofia-muted)" }}>
+                    {c.telefono}
+                  </div>
+                </div>
+                <span
+                  className="sofia-pill"
+                  style={{
+                    background:
+                      c.tipo === "Inbound"
+                        ? "var(--sofia-success-lt)"
+                        : "var(--sofia-accent-lt)",
+                    color:
+                      c.tipo === "Inbound"
+                        ? "var(--sofia-success)"
+                        : "var(--sofia-accent)",
+                  }}
+                >
+                  {c.tipo === "Inbound" ? "📥" : "📤"} {c.tipo}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11.5px] mb-2">
+                <span style={{ color: "var(--sofia-muted)" }}>
+                  {fmtFechaCL(c.created_at)}
+                </span>
+                <span className="font-mono">
+                  {Math.floor(c.duracion_seg / 60)}:
+                  {String(c.duracion_seg % 60).padStart(2, "0")}
+                </span>
+              </div>
+              <div
+                className="flex items-center justify-between text-[11.5px] pt-2"
+                style={{ borderTop: "1px solid var(--sofia-border)" }}
+              >
+                <span style={{ color: "var(--sofia-muted)" }}>
+                  Retell {fmtUSD(c.costo_retell_usd || 0)} · Tel {fmtUSD(c.costo_twilio_usd || 0)}
+                </span>
+                <span
+                  className="font-mono font-bold"
+                  style={{ color: "var(--sofia-accent)" }}
+                >
+                  {fmtUSD(total)}
+                </span>
+              </div>
+              {(c.cita_agendada || c.carrier) && (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {c.cita_agendada && (
+                    <span className="sofia-pill sofia-pill-cita">Cita</span>
+                  )}
+                  {c.carrier && (
+                    <span
+                      className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded"
+                      style={{
+                        background:
+                          c.carrier === "telnyx"
+                            ? "var(--sofia-purple-lt)"
+                            : "var(--sofia-danger-lt)",
+                        color:
+                          c.carrier === "telnyx"
+                            ? "var(--sofia-purple)"
+                            : "var(--sofia-danger)",
+                      }}
+                    >
+                      {c.carrier}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block sofia-card overflow-x-auto">
         <table className="sofia-table min-w-[860px]">
           <thead>
             <tr>

@@ -199,70 +199,123 @@ export function LeadsView({ leads }: { leads: Lead[] }) {
           })}
         </div>
       ) : (
-        <div className="sofia-card overflow-x-auto">
-          <table className="sofia-table min-w-[700px]">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Estado</th>
-                <th>Temp.</th>
-                <th>Comuna interés</th>
-                <th>Presupuesto</th>
-                <th>Última act.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
+        <>
+          {/* Desktop / tablet table */}
+          <div className="hidden md:block sofia-card overflow-x-auto">
+            <table className="sofia-table min-w-[700px]">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-6"
-                    style={{ color: "var(--sofia-muted)" }}
-                  >
-                    Sin leads para los filtros.
-                  </td>
+                  <th>Nombre</th>
+                  <th>Estado</th>
+                  <th>Temp.</th>
+                  <th>Comuna interés</th>
+                  <th>Presupuesto</th>
+                  <th>Última act.</th>
                 </tr>
-              )}
-              {filtered.map((l) => (
-                <tr key={l.id} className="row-link">
-                  <td>
-                    <Link
-                      href={`/leads/${l.id}`}
-                      className="block"
-                      style={{ color: "inherit" }}
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="text-center py-6"
+                      style={{ color: "var(--sofia-muted)" }}
                     >
-                      <div className="font-semibold">{l.nombre}</div>
-                      <div
-                        className="text-[12px] font-mono"
-                        style={{ color: "var(--sofia-muted)" }}
+                      Sin leads para los filtros.
+                    </td>
+                  </tr>
+                )}
+                {filtered.map((l) => (
+                  <tr key={l.id} className="row-link">
+                    <td>
+                      <Link
+                        href={`/leads/${l.id}`}
+                        className="block"
+                        style={{ color: "inherit" }}
                       >
-                        {l.telefono}
-                      </div>
-                    </Link>
-                  </td>
-                  <td>
-                    <PillEstatus s={l.estatus} />
-                  </td>
-                  <td>
-                    <PillTemp t={l.temperatura} />
-                  </td>
-                  <td className="text-[13px]">
-                    {l.comunas_interes?.join(", ") || "—"}
-                  </td>
-                  <td className="text-[13px] font-mono">
-                    {formatPresupuesto(l)}
-                  </td>
-                  <td
-                    className="text-[12px]"
-                    style={{ color: "var(--sofia-muted)" }}
-                  >
+                        <div className="font-semibold">{l.nombre}</div>
+                        <div
+                          className="text-[12px] font-mono"
+                          style={{ color: "var(--sofia-muted)" }}
+                        >
+                          {l.telefono}
+                        </div>
+                      </Link>
+                    </td>
+                    <td>
+                      <PillEstatus s={l.estatus} />
+                    </td>
+                    <td>
+                      <PillTemp t={l.temperatura} />
+                    </td>
+                    <td className="text-[13px]">
+                      {l.comunas_interes?.join(", ") || "—"}
+                    </td>
+                    <td className="text-[13px] font-mono">
+                      {formatPresupuesto(l)}
+                    </td>
+                    <td
+                      className="text-[12px]"
+                      style={{ color: "var(--sofia-muted)" }}
+                    >
+                      {fmtFechaCorta(l.updated_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden flex flex-col gap-2">
+            {filtered.length === 0 && (
+              <div
+                className="text-center py-6 text-[12px]"
+                style={{ color: "var(--sofia-muted)" }}
+              >
+                Sin leads para los filtros.
+              </div>
+            )}
+            {filtered.map((l) => (
+              <Link
+                key={l.id}
+                href={`/leads/${l.id}`}
+                className="sofia-card block"
+                style={{ padding: "14px 16px" }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold truncate">
+                      {l.nombre}
+                    </div>
+                    <div
+                      className="text-[12px] font-mono"
+                      style={{ color: "var(--sofia-muted)" }}
+                    >
+                      {l.telefono}
+                    </div>
+                  </div>
+                  <PillTemp t={l.temperatura} />
+                </div>
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <PillEstatus s={l.estatus} />
+                </div>
+                <div
+                  className="text-[12px] mb-1"
+                  style={{ color: "var(--sofia-muted)" }}
+                >
+                  Comunas: {l.comunas_interes?.join(", ") || "—"}
+                </div>
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="font-mono">{formatPresupuesto(l)}</span>
+                  <span style={{ color: "var(--sofia-muted)" }}>
                     {fmtFechaCorta(l.updated_at)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </>
   );

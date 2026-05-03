@@ -267,46 +267,91 @@ export function PropiedadesView({ items }: { items: Propiedad[] }) {
           ))}
         </div>
       ) : (
-        <div className="sofia-card overflow-x-auto">
-          <table className="sofia-table min-w-[700px]">
-            <thead>
-              <tr>
-                <th>Propiedad</th>
-                <th>Tipo</th>
-                <th>Comuna</th>
-                <th>Operación</th>
-                <th>Precio</th>
-                <th>Dorm</th>
-                <th>m²</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-semibold">{p.nombre}</td>
-                  <td className="text-[13px]">{p.tipo}</td>
-                  <td className="text-[13px]">{p.comuna}</td>
-                  <td className="text-[13px]">{p.operacion}</td>
-                  <td className="font-mono text-[13px]">
-                    {fmtPrecio(p.precio, p.operacion)}
-                  </td>
-                  <td className="font-mono text-[13px]">
-                    {p.dormitorios ?? "—"}
-                  </td>
-                  <td className="font-mono text-[13px]">{p.m2 ?? "—"}</td>
-                  <td>
-                    <span
-                      className={`sofia-pill ${p.disponible ? "sofia-pill-disponible" : "sofia-pill-vendido"}`}
-                    >
-                      {p.disponible ? "Disponible" : "No disp."}
-                    </span>
-                  </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block sofia-card overflow-x-auto">
+            <table className="sofia-table min-w-[700px]">
+              <thead>
+                <tr>
+                  <th>Propiedad</th>
+                  <th>Tipo</th>
+                  <th>Comuna</th>
+                  <th>Operación</th>
+                  <th>Precio</th>
+                  <th>Dorm</th>
+                  <th>m²</th>
+                  <th>Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <tr key={p.id}>
+                    <td className="font-semibold">{p.nombre}</td>
+                    <td className="text-[13px]">{p.tipo}</td>
+                    <td className="text-[13px]">{p.comuna}</td>
+                    <td className="text-[13px]">{p.operacion}</td>
+                    <td className="font-mono text-[13px]">
+                      {fmtPrecio(p.precio, p.operacion)}
+                    </td>
+                    <td className="font-mono text-[13px]">
+                      {p.dormitorios ?? "—"}
+                    </td>
+                    <td className="font-mono text-[13px]">{p.m2 ?? "—"}</td>
+                    <td>
+                      <span
+                        className={`sofia-pill ${p.disponible ? "sofia-pill-disponible" : "sofia-pill-vendido"}`}
+                      >
+                        {p.disponible ? "Disponible" : "No disp."}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden flex flex-col gap-2">
+            {filtered.map((p) => (
+              <div
+                key={p.id}
+                className="sofia-card"
+                style={{ padding: "14px 16px" }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold truncate">
+                      {p.nombre}
+                    </div>
+                    <div
+                      className="text-[12px]"
+                      style={{ color: "var(--sofia-muted)" }}
+                    >
+                      {p.tipo} · {p.comuna}
+                    </div>
+                  </div>
+                  <span
+                    className={`sofia-pill ${p.disponible ? "sofia-pill-disponible" : "sofia-pill-vendido"}`}
+                  >
+                    {p.disponible ? "Disponible" : "No disp."}
+                  </span>
+                </div>
+                <div className="text-[15px] font-bold font-mono mb-2">
+                  {fmtPrecio(p.precio, p.operacion)}
+                </div>
+                <div
+                  className="flex gap-3 text-[12px]"
+                  style={{ color: "var(--sofia-muted)" }}
+                >
+                  <span>{p.operacion}</span>
+                  {p.dormitorios !== null && <span>🛏 {p.dormitorios}</span>}
+                  {p.banos !== null && <span>🛁 {p.banos}</span>}
+                  {p.m2 !== null && <span>📐 {p.m2}m²</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </>
   );

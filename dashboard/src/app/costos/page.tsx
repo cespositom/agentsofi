@@ -177,7 +177,8 @@ export default async function CostosPage() {
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="sofia-table min-w-[700px]">
             <thead>
               <tr>
@@ -224,6 +225,54 @@ export default async function CostosPage() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile */}
+        <div className="md:hidden flex flex-col gap-2">
+          {calls.slice(0, 100).map((c) => {
+            const total =
+              (Number(c.costo_retell_usd) || 0) +
+              (Number(c.costo_twilio_usd) || 0);
+            return (
+              <div
+                key={c.id}
+                className="rounded-md p-3"
+                style={{ border: "1px solid var(--sofia-border)" }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="text-[13px] font-semibold truncate">
+                    {c.nombre_lead || c.titulo || "—"}
+                  </div>
+                  <span
+                    className="font-mono font-bold text-[13px] shrink-0"
+                    style={{ color: "var(--sofia-accent)" }}
+                  >
+                    {fmtUSD(total)}
+                  </span>
+                </div>
+                <div
+                  className="flex items-center justify-between text-[11px] mb-1.5"
+                  style={{ color: "var(--sofia-muted)" }}
+                >
+                  <span>{fmtFechaCL(c.created_at)}</span>
+                  <span className="font-mono">
+                    {Math.floor(c.duracion_seg / 60)}:
+                    {String(c.duracion_seg % 60).padStart(2, "0")}
+                  </span>
+                </div>
+                <div
+                  className="text-[11px]"
+                  style={{ color: "var(--sofia-muted)" }}
+                >
+                  Retell {fmtUSD(c.costo_retell_usd || 0)} · Tel{" "}
+                  {fmtUSD(c.costo_twilio_usd || 0)}
+                  {c.carrier && (
+                    <span className="ml-1 font-mono">· {c.carrier}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Shell>
