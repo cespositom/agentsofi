@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 export default function SignupPage() {
@@ -40,12 +39,29 @@ export default function SignupPage() {
     }
   }
 
+  const inputCls =
+    "w-full rounded-md px-3 py-2 text-sm outline-none";
+  const inputStyle = {
+    border: "1px solid var(--sofia-border)",
+    background: "var(--sofia-bg)",
+    color: "var(--sofia-fg)",
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950">
-      <div className="w-full max-w-sm space-y-6 rounded-2xl border border-white/[0.06] bg-neutral-900 p-8">
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "var(--sofia-bg)" }}
+    >
+      <div
+        className="w-full max-w-sm space-y-6 rounded-2xl p-8"
+        style={{
+          background: "var(--sofia-surface)",
+          border: "1px solid var(--sofia-border)",
+        }}
+      >
         <div className="text-center space-y-1">
-          <h1 className="font-heading text-2xl italic">Crear cuenta</h1>
-          <p className="text-xs text-neutral-500">
+          <h1 className="text-xl font-bold">Crear cuenta</h1>
+          <p className="text-xs" style={{ color: "var(--sofia-muted)" }}>
             El primer usuario debe ser promovido a admin desde SQL.
           </p>
         </div>
@@ -58,7 +74,8 @@ export default function SignupPage() {
               required
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm"
+              className={inputCls}
+              style={inputStyle}
             />
           </div>
           <div className="space-y-1.5">
@@ -69,7 +86,8 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm"
+              className={inputCls}
+              style={inputStyle}
             />
           </div>
           <div className="space-y-1.5">
@@ -81,19 +99,37 @@ export default function SignupPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm"
+              className={inputCls}
+              style={inputStyle}
             />
           </div>
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          {info && <p className="text-xs text-emerald-400">{info}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
+          {error && (
+            <p className="text-xs" style={{ color: "var(--sofia-danger)" }}>
+              {error}
+            </p>
+          )}
+          {info && (
+            <p className="text-xs" style={{ color: "var(--sofia-success)" }}>
+              {info}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-2 rounded-md text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--sofia-accent)" }}
+          >
             {loading ? "Creando..." : "Crear cuenta"}
-          </Button>
+          </button>
         </form>
 
-        <p className="text-center text-xs text-neutral-500">
+        <p className="text-center text-xs" style={{ color: "var(--sofia-muted)" }}>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="text-amber-400 hover:underline">
+          <Link
+            href="/login"
+            style={{ color: "var(--sofia-accent)" }}
+            className="hover:underline"
+          >
             Iniciar sesión
           </Link>
         </p>

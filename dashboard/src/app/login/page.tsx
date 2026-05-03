@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
@@ -33,14 +32,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950">
-      <div className="w-full max-w-sm space-y-6 rounded-2xl border border-white/[0.06] bg-neutral-900 p-8">
-        <div className="text-center space-y-1">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-xl font-bold text-black">
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "var(--sofia-bg)" }}
+    >
+      <div
+        className="w-full max-w-sm space-y-6 rounded-2xl p-8"
+        style={{
+          background: "var(--sofia-surface)",
+          border: "1px solid var(--sofia-border)",
+        }}
+      >
+        <div className="text-center space-y-2">
+          <div
+            className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold text-white"
+            style={{ background: "var(--sofia-accent)" }}
+          >
             S
           </div>
-          <h1 className="font-heading text-2xl italic">Sofía</h1>
-          <p className="text-xs text-neutral-500">Inicia sesión en el panel</p>
+          <h1 className="text-xl font-bold">Sofía</h1>
+          <p className="text-xs" style={{ color: "var(--sofia-muted)" }}>
+            Inicia sesión en el panel
+          </p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -52,7 +65,12 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm"
+              className="w-full rounded-md px-3 py-2 text-sm outline-none"
+              style={{
+                border: "1px solid var(--sofia-border)",
+                background: "var(--sofia-bg)",
+                color: "var(--sofia-fg)",
+              }}
             />
           </div>
           <div className="space-y-1.5">
@@ -63,18 +81,39 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm"
+              className="w-full rounded-md px-3 py-2 text-sm outline-none"
+              style={{
+                border: "1px solid var(--sofia-border)",
+                background: "var(--sofia-bg)",
+                color: "var(--sofia-fg)",
+              }}
             />
           </div>
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
+          {error && (
+            <p className="text-xs" style={{ color: "var(--sofia-danger)" }}>
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-2 rounded-md text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--sofia-accent)" }}
+          >
             {loading ? "Entrando..." : "Entrar"}
-          </Button>
+          </button>
         </form>
 
-        <p className="text-center text-xs text-neutral-500">
+        <p
+          className="text-center text-xs"
+          style={{ color: "var(--sofia-muted)" }}
+        >
           ¿Sin cuenta?{" "}
-          <Link href="/signup" className="text-amber-400 hover:underline">
+          <Link
+            href="/signup"
+            style={{ color: "var(--sofia-accent)" }}
+            className="hover:underline"
+          >
             Crear cuenta
           </Link>
         </p>

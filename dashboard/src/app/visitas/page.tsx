@@ -1,19 +1,17 @@
 import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { fmtFechaCL } from "@/lib/format";
 import type { Visita } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
-const estadoColors: Record<string, string> = {
-  Solicitada: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  Confirmada: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  Realizada: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  Cancelada: "bg-red-500/20 text-red-400 border-red-500/30",
-  "No-show": "bg-orange-500/20 text-orange-400 border-orange-500/30",
+const ESTADO_PILL: Record<string, string> = {
+  Solicitada: "sofia-pill-pendiente",
+  Confirmada: "sofia-pill-disponible",
+  Realizada: "sofia-pill-cita",
+  Cancelada: "sofia-pill-perdido",
+  "No-show": "sofia-pill-warm",
 };
 
 export default async function VisitasPage() {
@@ -31,60 +29,94 @@ export default async function VisitasPage() {
   const visitas = (data ?? []) as unknown as Visita[];
 
   const proximas = visitas.filter((v) => new Date(v.fecha_hora) >= new Date());
-  const pasadas = visitas.filter((v) => new Date(v.fecha_hora) < new Date());
+  const pasadas = visitas
+    .filter((v) => new Date(v.fecha_hora) < new Date())
+    .reverse();
 
   return (
     <Shell email={user?.email}>
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         <div>
-          <h1 className="font-heading text-3xl italic tracking-tight">Visitas</h1>
-          <p className="text-sm text-neutral-500">{visitas.length} totales</p>
+          <h1 className="text-[15px] font-bold leading-tight">Visitas</h1>
+          <p className="text-xs" style={{ color: "var(--sofia-muted)" }}>
+            {visitas.length} totales · {proximas.length} próximas
+          </p>
         </div>
-        <Link href="/visitas/nueva" className={buttonVariants()}>
+        <Link
+          href="/visitas/nueva"
+          className="px-3 py-1.5 rounded-md text-[11px] font-semibold text-white"
+          style={{ background: "var(--sofia-accent)" }}
+        >
           + Agendar visita
         </Link>
       </div>
 
-      <Section title={`Próximas (${proximas.length})`} visitas={proximas} />
-      <Section title={`Historial (${pasadas.length})`} visitas={pasadas.reverse()} />
+      <Section title="Próximas" visitas={proximas} highlight />
+      <Section title="Historial" visitas={pasadas} />
     </Shell>
   );
 }
 
-function Section({ title, visitas }: { title: string; visitas: Visita[] }) {
+function Section({
+  title,
+  visitas,
+  highlight,
+}: {
+  title: string;
+  visitas: Visita[];
+  highlight?: boolean;
+}) {
   return (
-    <div className="mb-8">
-      <h2 className="font-heading italic text-lg mb-3">{title}</h2>
+    <div className="mb-5">
+      <h2
+        className="text-[13px] font-semibold mb-3"
+        style={highlight ? {} : { color: "var(--sofia-muted)" }}
+      >
+        {title} ({visitas.length})
+      </h2>
       {visitas.length === 0 ? (
-        <p className="text-sm text-neutral-600 py-4">Sin visitas.</p>
+        <p
+          className="text-[12px] py-4"
+          style={{ color: "var(--sofia-muted)" }}
+        >
+          Sin visitas.
+        </p>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           {visitas.map((v) => (
             <div
               key={v.id}
-              className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+              className="rounded-md px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+              style={{
+                background: "var(--sofia-surface)",
+                border: "1px solid var(--sofia-border)",
+              }}
             >
               <div className="min-w-0">
-                <p className="text-sm">
+                <p className="text-[13px] font-medium truncate">
                   {v.lead?.nombre || "Sin lead"}
                   {v.propiedad?.nombre && (
-                    <span className="text-neutral-500">
+                    <span style={{ color: "var(--sofia-muted)" }}>
                       {" "}
                       · {v.propiedad.nombre} ({v.propiedad.comuna})
                     </span>
                   )}
                 </p>
-                <p className="text-[11px] text-neutral-500">
+                <p
+                  className="text-[11px] mt-0.5"
+                  style={{ color: "var(--sofia-muted)" }}
+                >
                   {fmtFechaCL(v.fecha_hora)} · {v.duracion_min}min
-                  {v.lead?.telefono && ` · ${v.lead.telefono}`}
+                  {v.lead?.telefono && (
+                    <span className="font-mono"> · {v.lead.telefono}</span>
+                  )}
                 </p>
               </div>
-              <Badge
-                variant="outline"
-                className={`text-[10px] ${estadoColors[v.estado] ?? ""}`}
+              <span
+                className={`sofia-pill ${ESTADO_PILL[v.estado] ?? ""}`}
               >
                 {v.estado}
-              </Badge>
+              </span>
             </div>
           ))}
         </div>
