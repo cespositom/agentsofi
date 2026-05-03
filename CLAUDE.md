@@ -3,15 +3,28 @@
 > Guía de contexto para futuras sesiones de Claude Code que abran este proyecto.
 > Este es un **fork muy modificado** de `santmun/sofia-voice-agent`. El upstream apunta a México con Notion + Cal.com; este fork apunta a Chile con Supabase self-hosted y webapp propia. **No reintroducir Notion ni Cal.com.**
 
-## 0. Estado actual (al 2026-05-01) — pausado esperando Twilio
+## 0. Estado actual (al 2026-05-03) — pausado esperando Twilio
 
-**TODO el sistema está desplegado y operativo a nivel software**. La única razón por la que Sofía no está atendiendo llamadas en producción todavía es que **Twilio Trial bloquea outbound a Chile**. El próximo paso es:
+**TODO el sistema está desplegado y operativo a nivel software**, incluido el **redesign visual completo** del dashboard basado en el mock `sofia-ai-dashboard-v2-3.html` (en `C:\Users\cesar\Projects\open-design\.od\projects\896f57a4-...\`). La única razón por la que Sofía no está atendiendo llamadas en producción todavía es que **Twilio Trial bloquea outbound a Chile**. El próximo paso es:
 
 1. **Activar billing en Twilio** (https://console.twilio.com/us1/billing/manage-billing → Add Funds USD 20)
 2. **Habilitar Geographic Permissions Chile** (Low Risk + High Risk Special Services) — solo aparece como opción cuando la cuenta sale del trial
 3. (En paralelo) Iniciar **Telnyx Level 2 Verification** para tener carrier secundario más barato (~$0.08/min vs $0.20 Twilio)
 
 Una vez activo Twilio paid, el sistema funciona end-to-end sin tocar más código. Multi-carrier ya está implementado y listo para activar Telnyx cuando llegue su aprobación (solo cambiar 3 env vars + redeploy Modal).
+
+### Redesign visual (mayo 2026)
+El dashboard fue reescrito completamente con el mock open-design:
+- **Tema claro** (paleta `#F4F6FA` bg + accent azul `#2563EB` + sofia purple `#7C3AED` + status pills) — ya NO es dark
+- **Topnav horizontal** (reemplazo del antiguo sidebar) con tabs: Dashboard / Leads / Propiedades / Llamadas / Visitas / Costos
+- **Mobile**: topnav colapsa a hamburger drawer; tablas se reemplazan por stack de cards (`md:hidden` / `hidden md:block`)
+- **Fuente Montserrat** solo en el topnav (`--font-montserrat`); el resto usa Inter
+- Tokens CSS globales en `globals.css` con prefijo `--sofia-*` (bg, surface, accent, purple, success, warn, danger, muted, border)
+- Helpers CSS: `.sofia-card`, `.sofia-kpi`, `.sofia-table`, `.sofia-pill-*`, `.sofia-pbar`/`.sofia-pfill`, `.sofia-nav-link`
+- Páginas nuevas: `/leads/[id]` (LeadDetail con timeline), `/costos` (KPIs + breakdown por carrier)
+- Vistas dual: `/leads` y `/propiedades` con switcher Kanban|Tabla / Grilla|Tabla
+- Forms (`/leads/nuevo`, `/propiedades/nueva`, `/visitas/nueva`) con inputs claros + botones inline (NO shadcn `Button` — desentona)
+- Mock fuente: `C:\Users\cesar\Projects\open-design\.od\projects\896f57a4-3504-4e9c-a518-cbe8fe519396\sofia-ai-dashboard-v2-3.html`
 
 ### URLs en producción
 - **Webapp**: https://agtimb.cesmark.cl (login: `cesaresposito@gmail.com`, rol admin)
@@ -71,21 +84,34 @@ sofia-voice-agent/
 │   │   └── anthropic_service.py        # análisis post-llamada
 │   └── webhooks/
 │       └── retell_handler.py           # call_started/ended/analyzed → guarda en DB
-├── dashboard/                          # Webapp Next 16
+├── dashboard/                          # Webapp Next 16 (tema claro post-redesign)
 │   ├── Dockerfile                      # multi-stage standalone build
 │   ├── src/
 │   │   ├── proxy.ts                    # ¡NO middleware.ts! Next 16 usa proxy.ts
 │   │   ├── lib/
 │   │   │   ├── supabase/{client,server,types}.ts
-│   │   │   └── format.ts               # CLP, UF, fechas TZ Santiago, USD, offsetSantiago, toSantiagoISO
-│   │   ├── components/{shell,sidebar,ui/*}
+│   │   │   └── format.ts               # CLP, UF, USD, fechas TZ Santiago, offsetSantiago, toSantiagoISO
+│   │   ├── components/
+│   │   │   ├── topnav.tsx              # Top nav oscuro con tabs + drawer mobile (Montserrat)
+│   │   │   ├── shell.tsx               # Layout = TopNav + main scroll
+│   │   │   ├── lead-pills.tsx          # PillEstatus / PillTemp / PillPropEstado + ESTATUS_COLORS
+│   │   │   └── ui/*                    # base shadcn (Label etc) — Button casi no se usa post-redesign
 │   │   └── app/
-│   │       ├── page.tsx                # dashboard KPIs (incluye sección costos)
-│   │       ├── login/, signup/
-│   │       ├── leads/{,nuevo}/
-│   │       ├── propiedades/{,nueva}/
-│   │       ├── llamadas/                # con CallCostBreakdown ámbar
-│   │       ├── visitas/{,nueva}/
+│   │       ├── page.tsx                # Dashboard rediseñado: 4 KPIs + leads recientes + pipeline + actividad
+│   │       ├── login/, signup/         # Tema claro
+│   │       ├── leads/
+│   │       │   ├── page.tsx            # Server: fetch leads → LeadsView
+│   │       │   ├── leads-view.tsx      # Client: switcher Kanban/Tabla, search, mobile cards
+│   │       │   ├── trigger-button.tsx  # Disparar outbound
+│   │       │   ├── nuevo/page.tsx      # Form light
+│   │       │   └── [id]/page.tsx       # LeadDetail: info + timeline llamadas + visitas + Sofia stats
+│   │       ├── propiedades/
+│   │       │   ├── page.tsx            # Server
+│   │       │   ├── propiedades-view.tsx # Client: grid|tabla, chips de filtros
+│   │       │   └── nueva/page.tsx      # Form light
+│   │       ├── llamadas/page.tsx       # Tabla 9-col + mobile cards + carrier badge + Retell/Tel/Total
+│   │       ├── visitas/{,nueva}/       # Lista + form light
+│   │       ├── costos/page.tsx         # KPIs 24h + histórico + breakdown por carrier + detalle
 │   │       └── api/trigger-outbound/route.ts
 │   └── .env.local.example
 ├── scripts/
@@ -190,9 +216,9 @@ docker exec -e PGPASSWORD="$PG_PASS" $DB psql -U postgres -d postgres -f /tmp/x.
 
 ## 9. Convenciones / cosas a respetar en revisiones
 
+### Backend / infra
 - **No reintroducir Notion/Cal.com** ni dependencias.
 - **Webapp = Next 16**: el archivo es `src/proxy.ts` con `export async function proxy(...)`. NO `middleware.ts`.
-- **Tailwind 4** + base-ui: `Button` no soporta `asChild`. Para enlaces que parecen botón usar `<Link className={buttonVariants(...)}>`.
 - Backend: cuando se agregan endpoints en `main.py`, importar dentro de la función — patrón existente para deferred import en Modal.
 - Modal usa `image.add_local_python_source("app", copy=True)` — sin `copy=True` el package no se ve dentro del container.
 - Strings en es-CL en prompts y UI; código y nombres de variables en inglés/español neutro.
@@ -201,6 +227,18 @@ docker exec -e PGPASSWORD="$PG_PASS" $DB psql -U postgres -d postgres -f /tmp/x.
 - Cron Modal: `outbound_cron` cada hora (`schedule=modal.Cron("0 * * * *")`), 10min timeout.
 - **CREATE OR REPLACE VIEW**: solo permite agregar columnas al final, no reordenar. Si hay que cambiar la estructura → `DROP VIEW IF EXISTS ... CASCADE` primero.
 - **TZ**: usar `zoneinfo("America/Santiago")` en backend y `toSantiagoISO()` en webapp. NO hardcodear `-04:00`.
+
+### Webapp post-redesign (importante)
+- **Tema claro**: usar tokens `var(--sofia-*)` (NO clases tailwind tipo `bg-neutral-950`, `text-amber-400`, `bg-white/[0.02]` — esos quedaron del tema dark viejo).
+- **No usar `Button` de shadcn en CTAs principales** — desentona. Usar buttons inline con `style={{ background: "var(--sofia-accent)" }}` y clase `text-white text-sm font-semibold`. shadcn `Button` solo si es un botón secundario muy específico.
+- **Pills de estatus**: importar `PillEstatus`, `PillTemp`, `PillPropEstado` desde `@/components/lead-pills`. NO renderizar pills inline.
+- **Tablas responsive**: SIEMPRE pareja `hidden md:block` (table desktop) + `md:hidden` (cards mobile). NO dejar solo `overflow-x-auto` — en mobile se ve mal.
+- **Cards**: usar clase `.sofia-card` (incluye padding, border, radius) en lugar de re-armar.
+- **KPIs**: clase `.sofia-kpi` + estructura `<div className="sofia-kpi-lbl">…</div><div className="sofia-kpi-val font-mono">…</div>`.
+- **Forms**: input pattern es `className={inputCls} style={inputStyle}` con `inputStyle = { border: "1px solid var(--sofia-border)", background: "var(--sofia-surface)", color: "var(--sofia-fg)" }`.
+- **Topnav fuente**: solo Montserrat (CSS lo aplica vía `.sofia-topnav` selector). NO sobrescribir font-family en items del nav.
+- **Headers de página**: `<h1 className="text-[15px] font-bold leading-tight">…</h1>` + subtítulo `<p className="text-xs" style={{ color: "var(--sofia-muted)" }}>`. NO usar `font-heading italic text-3xl` (era del tema viejo).
+- **Pages que muestran datos por usuario** deben pasar `email={user?.email}` al `<Shell>` para que el topnav muestre el avatar.
 
 ## 10. Pendientes humanos
 
