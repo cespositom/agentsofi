@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Shell } from "@/components/shell";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { Lead, Propiedad } from "@/lib/supabase/types";
 import { toSantiagoISO } from "@/lib/format";
@@ -62,14 +61,18 @@ export default function NuevaVisitaPage() {
 
   return (
     <Shell>
-      <h1 className="font-heading text-3xl italic mb-6">Agendar visita</h1>
-      <form onSubmit={onSubmit} className="space-y-4 max-w-xl">
+      <h1 className="text-[15px] font-bold leading-tight mb-1">Agendar visita</h1>
+      <p className="text-xs mb-5" style={{ color: "var(--sofia-muted)" }}>
+        Crear una visita a una propiedad para un lead
+      </p>
+      <form onSubmit={onSubmit} className="space-y-4 max-w-xl sofia-card">
         <div className="space-y-1.5">
           <Label>Lead</Label>
           <select
             value={leadId}
             onChange={(e) => setLeadId(e.target.value)}
             className={inputCls}
+            style={inputStyle}
           >
             <option value="">— Sin lead —</option>
             {leads.map((l) => (
@@ -85,6 +88,7 @@ export default function NuevaVisitaPage() {
             value={propId}
             onChange={(e) => setPropId(e.target.value)}
             className={inputCls}
+            style={inputStyle}
           >
             <option value="">— Sin propiedad específica —</option>
             {props.map((p) => (
@@ -94,7 +98,7 @@ export default function NuevaVisitaPage() {
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label>Fecha</Label>
             <input
@@ -103,6 +107,7 @@ export default function NuevaVisitaPage() {
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
               className={inputCls}
+              style={inputStyle}
             />
           </div>
           <div className="space-y-1.5">
@@ -113,6 +118,7 @@ export default function NuevaVisitaPage() {
               value={hora}
               onChange={(e) => setHora(e.target.value)}
               className={inputCls}
+              style={inputStyle}
             />
           </div>
           <div className="space-y-1.5">
@@ -122,6 +128,7 @@ export default function NuevaVisitaPage() {
               value={duracion}
               onChange={(e) => setDuracion(Number(e.target.value))}
               className={inputCls}
+              style={inputStyle}
             />
           </div>
         </div>
@@ -131,16 +138,35 @@ export default function NuevaVisitaPage() {
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
             className={`${inputCls} min-h-[80px]`}
+            style={inputStyle}
           />
         </div>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && (
+          <p className="text-xs" style={{ color: "var(--sofia-danger)" }}>
+            {error}
+          </p>
+        )}
         <div className="flex gap-2">
-          <Button type="submit" disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 rounded-md text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--sofia-accent)" }}
+          >
             {loading ? "Guardando..." : "Agendar"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 rounded-md text-sm font-semibold border"
+            style={{
+              borderColor: "var(--sofia-border)",
+              color: "var(--sofia-fg)",
+              background: "var(--sofia-surface)",
+            }}
+          >
             Cancelar
-          </Button>
+          </button>
         </div>
       </form>
     </Shell>
@@ -148,4 +174,11 @@ export default function NuevaVisitaPage() {
 }
 
 const inputCls =
-  "w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm";
+  "w-full rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30";
+
+// Inline style usado en los inputs (tema claro)
+const inputStyle: React.CSSProperties = {
+  border: "1px solid var(--sofia-border)",
+  background: "var(--sofia-surface)",
+  color: "var(--sofia-fg)",
+};

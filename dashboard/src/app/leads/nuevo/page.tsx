@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Shell } from "@/components/shell";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 export default function NuevoLeadPage() {
@@ -58,15 +57,19 @@ export default function NuevoLeadPage() {
 
   return (
     <Shell>
-      <h1 className="font-heading text-3xl italic mb-6">Nuevo lead</h1>
-      <form onSubmit={onSubmit} className="space-y-4 max-w-xl">
-        <div className="grid grid-cols-2 gap-4">
+      <h1 className="text-[15px] font-bold leading-tight mb-1">Nuevo lead</h1>
+      <p className="text-xs mb-5" style={{ color: "var(--sofia-muted)" }}>
+        Cargá un prospecto manualmente
+      </p>
+      <form onSubmit={onSubmit} className="space-y-4 max-w-xl sofia-card">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Nombre">
             <input
               required
               value={form.nombre}
               onChange={(e) => set("nombre", e.target.value)}
               className={inputCls}
+              style={inputStyle}
             />
           </Field>
           <Field label="Teléfono (+56...)">
@@ -75,6 +78,7 @@ export default function NuevoLeadPage() {
               value={form.telefono}
               onChange={(e) => set("telefono", e.target.value)}
               className={inputCls}
+              style={inputStyle}
             />
           </Field>
         </div>
@@ -84,14 +88,16 @@ export default function NuevoLeadPage() {
             value={form.email}
             onChange={(e) => set("email", e.target.value)}
             className={inputCls}
+            style={inputStyle}
           />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Operación">
             <select
               value={form.operacion_buscada}
               onChange={(e) => set("operacion_buscada", e.target.value)}
               className={inputCls}
+              style={inputStyle}
             >
               <option>Compra</option>
               <option>Arriendo</option>
@@ -104,6 +110,7 @@ export default function NuevoLeadPage() {
               value={form.presupuesto}
               onChange={(e) => set("presupuesto", e.target.value)}
               className={inputCls}
+              style={inputStyle}
             />
           </Field>
         </div>
@@ -113,6 +120,7 @@ export default function NuevoLeadPage() {
             onChange={(e) => set("comunas_interes", e.target.value)}
             placeholder="Las Condes, Providencia"
             className={inputCls}
+            style={inputStyle}
           />
         </Field>
         <Field label="Notas">
@@ -120,16 +128,35 @@ export default function NuevoLeadPage() {
             value={form.notas}
             onChange={(e) => set("notas", e.target.value)}
             className={`${inputCls} min-h-[80px]`}
+            style={inputStyle}
           />
         </Field>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && (
+          <p className="text-xs" style={{ color: "var(--sofia-danger)" }}>
+            {error}
+          </p>
+        )}
         <div className="flex gap-2">
-          <Button type="submit" disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 rounded-md text-sm font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--sofia-accent)" }}
+          >
             {loading ? "Guardando..." : "Guardar"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-4 py-2 rounded-md text-sm font-semibold border"
+            style={{
+              borderColor: "var(--sofia-border)",
+              color: "var(--sofia-fg)",
+              background: "var(--sofia-surface)",
+            }}
+          >
             Cancelar
-          </Button>
+          </button>
         </div>
       </form>
     </Shell>
@@ -137,7 +164,13 @@ export default function NuevoLeadPage() {
 }
 
 const inputCls =
-  "w-full rounded-md border border-white/10 bg-neutral-950 px-3 py-2 text-sm";
+  "w-full rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30";
+
+const inputStyle: React.CSSProperties = {
+  border: "1px solid var(--sofia-border)",
+  background: "var(--sofia-surface)",
+  color: "var(--sofia-fg)",
+};
 
 function Field({
   label,
