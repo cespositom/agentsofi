@@ -1,4 +1,4 @@
-import { Sidebar } from "./sidebar";
+import { TopNav } from "./topnav";
 
 export function Shell({
   children,
@@ -8,10 +8,12 @@ export function Shell({
   email?: string | null;
 }) {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar email={email} />
-      <main className="flex-1 pl-64">
-        <div className="mx-auto max-w-6xl px-8 py-8">{children}</div>
+    <div className="flex flex-col h-screen overflow-hidden">
+      <TopNav email={email} />
+      <main className="flex-1 overflow-y-auto">
+        <div className="px-6 py-6 max-w-[1400px] mx-auto w-full">
+          {children}
+        </div>
       </main>
     </div>
   );
