@@ -168,9 +168,28 @@ def process_post_call(call_id: str) -> dict:
     else:
         resultado = "Contestada"
 
-    # Estimación de costo Modal por llamada (configurable, calibrar mensualmente).
+    # Costo Modal: si la fila ya tiene compute_modal_seg tracked, usar
+    # el cálculo real (compute × rate). Si no, fallback al fixed estimate.
+    # Esto evita que /post-call-summary manual sobrescriba el valor real
+    # que los webhooks call_ended/call_analyzed dejaron via _add_compute_seconds.
     import os as _os
-    modal_cost = float(_os.environ.get("MODAL_COST_PER_CALL_USD", "0.005") or 0)
+    modal_cost_fixed = float(_os.environ.get("MODAL_COST_PER_CALL_USD", "0.005") or 0)
+    try:
+        existing = (
+            supabase_service._sb()
+                .table("llamadas")
+                .select("compute_modal_seg")
+                .eq("retell_call_id", call_id)
+                .limit(1)
+                .execute()
+        )
+        if existing.data and float(existing.data[0].get("compute_modal_seg") or 0) > 0:
+            seg = float(existing.data[0]["compute_modal_seg"])
+            modal_cost = round(seg * MODAL_RATE_USD_PER_CPU_SEC, 6)
+        else:
+            modal_cost = modal_cost_fixed
+    except Exception:
+        modal_cost = modal_cost_fixed
 
     # 3. Registrar/actualizar llamada (upsert por retell_call_id)
     call_record = supabase_service.create_call_record(
