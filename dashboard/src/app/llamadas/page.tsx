@@ -25,6 +25,14 @@ export default async function LlamadasPage() {
     (s, c) => s + (Number(c.costo_twilio_usd) || 0),
     0
   );
+  const totalAi = calls.reduce(
+    (s, c) => s + (Number(c.costo_anthropic_usd) || 0),
+    0
+  );
+  const totalModal = calls.reduce(
+    (s, c) => s + (Number(c.costo_modal_usd) || 0),
+    0
+  );
   const totalMin = calls.reduce((s, c) => s + (c.duracion_seg || 0), 0) / 60;
 
   return (
@@ -37,12 +45,14 @@ export default async function LlamadasPage() {
       </div>
 
       {/* KPIs rápidos */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 mb-5">
         {[
           { lbl: "Llamadas", val: calls.length },
-          { lbl: "Minutos totales", val: totalMin.toFixed(1) },
-          { lbl: "Retell total", val: fmtUSD(totalRetell) },
-          { lbl: "Telefonía total", val: fmtUSD(totalTel) },
+          { lbl: "Minutos", val: totalMin.toFixed(1) },
+          { lbl: "Retell", val: fmtUSD(totalRetell) },
+          { lbl: "Telefonía", val: fmtUSD(totalTel) },
+          { lbl: "IA", val: fmtUSD(totalAi) },
+          { lbl: "Modal", val: fmtUSD(totalModal) },
         ].map((k) => (
           <div className="sofia-kpi" key={k.lbl}>
             <div className="sofia-kpi-lbl">{k.lbl}</div>
@@ -64,7 +74,9 @@ export default async function LlamadasPage() {
         {calls.map((c) => {
           const total =
             (Number(c.costo_retell_usd) || 0) +
-            (Number(c.costo_twilio_usd) || 0);
+            (Number(c.costo_twilio_usd) || 0) +
+            (Number(c.costo_anthropic_usd) || 0) +
+            (Number(c.costo_modal_usd) || 0);
           return (
             <div key={c.id} className="sofia-card" style={{ padding: "14px 16px" }}>
               <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -106,7 +118,7 @@ export default async function LlamadasPage() {
                 style={{ borderTop: "1px solid var(--sofia-border)" }}
               >
                 <span style={{ color: "var(--sofia-muted)" }}>
-                  Retell {fmtUSD(c.costo_retell_usd || 0)} · Tel {fmtUSD(c.costo_twilio_usd || 0)}
+                  R {fmtUSD(c.costo_retell_usd || 0)} · T {fmtUSD(c.costo_twilio_usd || 0)} · IA {fmtUSD(c.costo_anthropic_usd || 0)} · M {fmtUSD(c.costo_modal_usd || 0)}
                 </span>
                 <span
                   className="font-mono font-bold"
@@ -146,7 +158,7 @@ export default async function LlamadasPage() {
 
       {/* Desktop table */}
       <div className="hidden md:block sofia-card overflow-x-auto">
-        <table className="sofia-table min-w-[860px]">
+        <table className="sofia-table min-w-[1000px]">
           <thead>
             <tr>
               <th>Lead</th>
@@ -156,6 +168,8 @@ export default async function LlamadasPage() {
               <th>Carrier</th>
               <th>Retell</th>
               <th>Telefonía</th>
+              <th>IA</th>
+              <th>Modal</th>
               <th>Total</th>
               <th>Resultado</th>
             </tr>
@@ -164,7 +178,7 @@ export default async function LlamadasPage() {
             {calls.length === 0 && (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={11}
                   className="text-center py-8"
                   style={{ color: "var(--sofia-muted)" }}
                 >
@@ -238,6 +252,12 @@ export default async function LlamadasPage() {
                   </td>
                   <td className="font-mono text-[12px]">
                     {fmtUSD(c.costo_twilio_usd || 0)}
+                  </td>
+                  <td className="font-mono text-[12px]">
+                    {fmtUSD(c.costo_anthropic_usd || 0)}
+                  </td>
+                  <td className="font-mono text-[12px]">
+                    {fmtUSD(c.costo_modal_usd || 0)}
                   </td>
                   <td
                     className="font-mono text-[12px] font-bold"

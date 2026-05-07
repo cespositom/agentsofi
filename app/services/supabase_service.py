@@ -221,6 +221,7 @@ def create_call_record(
     costo_detalle: list | None = None,
     carrier: str | None = None,
     costo_anthropic_usd: float = 0,
+    costo_modal_usd: float = 0,
 ) -> dict:
     lead = find_lead_by_phone(telefono) if telefono else None
 
@@ -239,6 +240,7 @@ def create_call_record(
         "cita_agendada": cita_agendada,
         "costo_retell_usd": costo_usd,
         "costo_anthropic_usd": costo_anthropic_usd,
+        "costo_modal_usd": costo_modal_usd,
         "carrier": carrier_norm,
         # Mantenemos el nombre histórico costo_twilio_usd para no romper UI;
         # ahora representa "costo del carrier que efectivamente se usó".

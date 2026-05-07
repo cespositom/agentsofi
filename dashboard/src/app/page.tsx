@@ -28,7 +28,7 @@ export default async function DashboardPage() {
       .limit(50),
     supabase
       .from("llamadas")
-      .select("id,nombre_lead,tipo,resultado,duracion_seg,sentimiento,costo_retell_usd,costo_twilio_usd,created_at")
+      .select("id,nombre_lead,tipo,resultado,duracion_seg,sentimiento,costo_retell_usd,costo_twilio_usd,costo_anthropic_usd,costo_modal_usd,created_at")
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
     {
       lbl: "Gasto Sofía 24h",
       val: fmtUSD(kpi?.costo_24h_usd ?? 0),
-      delta: `Retell ${fmtUSD(kpi?.costo_retell_24h_usd ?? 0)} · Tel ${fmtUSD(kpi?.costo_twilio_24h_usd ?? 0)}`,
+      delta: `R ${fmtUSD(kpi?.costo_retell_24h_usd ?? 0)} · T ${fmtUSD(kpi?.costo_twilio_24h_usd ?? 0)} · IA ${fmtUSD(kpi?.costo_anthropic_24h_usd ?? 0)} · M ${fmtUSD(kpi?.costo_modal_24h_usd ?? 0)}`,
       dir: "neu" as const,
     },
   ];
@@ -244,7 +244,11 @@ export default async function DashboardPage() {
               </tr>
             )}
             {calls.map((c) => {
-              const total = (c.costo_retell_usd ?? 0) + (c.costo_twilio_usd ?? 0);
+              const total =
+                (c.costo_retell_usd ?? 0) +
+                (c.costo_twilio_usd ?? 0) +
+                (c.costo_anthropic_usd ?? 0) +
+                (c.costo_modal_usd ?? 0);
               return (
                 <tr key={c.id}>
                   <td className="font-semibold">{c.nombre_lead || "—"}</td>

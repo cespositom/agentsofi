@@ -56,7 +56,15 @@ export default async function LeadDetailPage({
     (s, c) => s + (Number(c.costo_twilio_usd) || 0),
     0
   );
-  const totalCost = totalRetell + totalTel;
+  const totalAi = calls.reduce(
+    (s, c) => s + (Number(c.costo_anthropic_usd) || 0),
+    0
+  );
+  const totalModal = calls.reduce(
+    (s, c) => s + (Number(c.costo_modal_usd) || 0),
+    0
+  );
+  const totalCost = totalRetell + totalTel + totalAi + totalModal;
   const totalMin = calls.reduce((s, c) => s + (c.duracion_seg || 0), 0) / 60;
 
   return (
@@ -206,7 +214,9 @@ export default async function LeadDetailPage({
                           {String(c.duracion_seg % 60).padStart(2, "0")}
                         </span>
                         {(c.costo_retell_usd > 0 ||
-                          c.costo_twilio_usd > 0) && (
+                          c.costo_twilio_usd > 0 ||
+                          c.costo_anthropic_usd > 0 ||
+                          c.costo_modal_usd > 0) && (
                           <span
                             className="ml-2 font-mono text-[11px]"
                             style={{ color: "var(--sofia-muted)" }}
@@ -214,7 +224,9 @@ export default async function LeadDetailPage({
                             ·{" "}
                             {fmtUSD(
                               (c.costo_retell_usd || 0) +
-                                (c.costo_twilio_usd || 0)
+                                (c.costo_twilio_usd || 0) +
+                                (c.costo_anthropic_usd || 0) +
+                                (c.costo_modal_usd || 0)
                             )}
                           </span>
                         )}

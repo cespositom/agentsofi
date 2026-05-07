@@ -32,3 +32,10 @@ SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 # --- Anthropic ---
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# --- Modal cost estimation ---
+# Modal cobra por compute time, no per-call. Esta es una estimación atribuible
+# por llamada (webhooks call_started/ended/analyzed + tool calls como
+# search_properties). Calibrar mensualmente contra el billing real de Modal.
+# Default $0.005 ≈ ~3-5 invocaciones cortas + idle time atribuido.
+MODAL_COST_PER_CALL_USD = float(os.environ.get("MODAL_COST_PER_CALL_USD", "0.005"))

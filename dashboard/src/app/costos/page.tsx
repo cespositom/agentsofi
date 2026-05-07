@@ -30,17 +30,18 @@ export default async function CostosPage() {
   const byCarrier = calls.reduce(
     (acc, c) => {
       const k = (c.carrier ?? "twilio") as string;
-      if (!acc[k]) acc[k] = { count: 0, retell: 0, tel: 0, ai: 0, min: 0 };
+      if (!acc[k]) acc[k] = { count: 0, retell: 0, tel: 0, ai: 0, modal: 0, min: 0 };
       acc[k].count += 1;
       acc[k].retell += Number(c.costo_retell_usd) || 0;
       acc[k].tel += Number(c.costo_twilio_usd) || 0;
       acc[k].ai += Number(c.costo_anthropic_usd) || 0;
+      acc[k].modal += Number(c.costo_modal_usd) || 0;
       acc[k].min += (c.duracion_seg || 0) / 60;
       return acc;
     },
     {} as Record<
       string,
-      { count: number; retell: number; tel: number; ai: number; min: number }
+      { count: number; retell: number; tel: number; ai: number; modal: number; min: number }
     >
   );
 
@@ -59,12 +60,13 @@ export default async function CostosPage() {
       <div className="mb-2 text-[10px] uppercase tracking-wider font-bold" style={{color:"var(--sofia-muted)"}}>
         Últimas 24 h
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 mb-5">
         {[
           { lbl: "Llamadas 24h", val: kpi?.llamadas_24h ?? 0 },
           { lbl: "Retell 24h", val: fmtUSD(kpi?.costo_retell_24h_usd ?? 0) },
           { lbl: "Telefonía 24h", val: fmtUSD(kpi?.costo_twilio_24h_usd ?? 0) },
           { lbl: "IA 24h", val: fmtUSD(kpi?.costo_anthropic_24h_usd ?? 0) },
+          { lbl: "Modal 24h", val: fmtUSD(kpi?.costo_modal_24h_usd ?? 0) },
           {
             lbl: "Total 24h",
             val: fmtUSD(kpi?.costo_24h_usd ?? 0),
@@ -87,7 +89,7 @@ export default async function CostosPage() {
       <div className="mb-2 text-[10px] uppercase tracking-wider font-bold" style={{color:"var(--sofia-muted)"}}>
         Histórico total
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 mb-5">
         {[
           { lbl: "Minutos totales", val: totalMin.toFixed(1) },
           { lbl: "Retell total", val: fmtUSD(kpi?.costo_retell_total_usd ?? 0) },
@@ -98,6 +100,10 @@ export default async function CostosPage() {
           {
             lbl: "IA total",
             val: fmtUSD(kpi?.costo_anthropic_total_usd ?? 0),
+          },
+          {
+            lbl: "Modal total",
+            val: fmtUSD(kpi?.costo_modal_total_usd ?? 0),
           },
           {
             lbl: "Total general",
@@ -121,7 +127,7 @@ export default async function CostosPage() {
       <div className="sofia-card mb-5">
         <div className="text-[13px] font-semibold mb-3">Desglose por carrier</div>
         <div className="overflow-x-auto">
-          <table className="sofia-table min-w-[700px]">
+          <table className="sofia-table min-w-[800px]">
             <thead>
               <tr>
                 <th>Carrier</th>
@@ -130,13 +136,14 @@ export default async function CostosPage() {
                 <th>Retell</th>
                 <th>Telefonía</th>
                 <th>IA</th>
+                <th>Modal</th>
                 <th>Total</th>
               </tr>
             </thead>
             <tbody>
               {Object.entries(byCarrier).length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-6" style={{ color: "var(--sofia-muted)" }}>
+                  <td colSpan={8} className="text-center py-6" style={{ color: "var(--sofia-muted)" }}>
                     Sin llamadas registradas.
                   </td>
                 </tr>
@@ -165,8 +172,9 @@ export default async function CostosPage() {
                   <td className="font-mono text-[13px]">{fmtUSD(v.retell)}</td>
                   <td className="font-mono text-[13px]">{fmtUSD(v.tel)}</td>
                   <td className="font-mono text-[13px]">{fmtUSD(v.ai)}</td>
+                  <td className="font-mono text-[13px]">{fmtUSD(v.modal)}</td>
                   <td className="font-mono text-[13px] font-bold" style={{color:"var(--sofia-accent)"}}>
-                    {fmtUSD(v.retell + v.tel + v.ai)}
+                    {fmtUSD(v.retell + v.tel + v.ai + v.modal)}
                   </td>
                 </tr>
               ))}
@@ -187,7 +195,7 @@ export default async function CostosPage() {
         </div>
         {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
-          <table className="sofia-table min-w-[800px]">
+          <table className="sofia-table min-w-[900px]">
             <thead>
               <tr>
                 <th>Lead</th>
@@ -197,16 +205,19 @@ export default async function CostosPage() {
                 <th>Retell</th>
                 <th>Telefonía</th>
                 <th>IA</th>
+                <th>Modal</th>
                 <th>Total</th>
               </tr>
             </thead>
             <tbody>
               {calls.slice(0, 100).map((c) => {
                 const ai = Number(c.costo_anthropic_usd) || 0;
+                const modal = Number(c.costo_modal_usd) || 0;
                 const total =
                   (Number(c.costo_retell_usd) || 0) +
                   (Number(c.costo_twilio_usd) || 0) +
-                  ai;
+                  ai +
+                  modal;
                 return (
                   <tr key={c.id}>
                     <td className="font-semibold">
@@ -231,6 +242,9 @@ export default async function CostosPage() {
                     <td className="font-mono text-[12px]">
                       {fmtUSD(ai)}
                     </td>
+                    <td className="font-mono text-[12px]">
+                      {fmtUSD(modal)}
+                    </td>
                     <td className="font-mono text-[12px] font-bold" style={{color:"var(--sofia-accent)"}}>
                       {fmtUSD(total)}
                     </td>
@@ -245,10 +259,12 @@ export default async function CostosPage() {
         <div className="md:hidden flex flex-col gap-2">
           {calls.slice(0, 100).map((c) => {
             const ai = Number(c.costo_anthropic_usd) || 0;
+            const modal = Number(c.costo_modal_usd) || 0;
             const total =
               (Number(c.costo_retell_usd) || 0) +
               (Number(c.costo_twilio_usd) || 0) +
-              ai;
+              ai +
+              modal;
             return (
               <div
                 key={c.id}
@@ -281,7 +297,8 @@ export default async function CostosPage() {
                   style={{ color: "var(--sofia-muted)" }}
                 >
                   Retell {fmtUSD(c.costo_retell_usd || 0)} · Tel{" "}
-                  {fmtUSD(c.costo_twilio_usd || 0)} · IA {fmtUSD(ai)}
+                  {fmtUSD(c.costo_twilio_usd || 0)} · IA {fmtUSD(ai)} · Modal{" "}
+                  {fmtUSD(modal)}
                   {c.carrier && (
                     <span className="ml-1 font-mono">· {c.carrier}</span>
                   )}

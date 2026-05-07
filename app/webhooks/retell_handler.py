@@ -124,6 +124,10 @@ def process_post_call(call_id: str) -> dict:
     else:
         resultado = "Contestada"
 
+    # Estimación de costo Modal por llamada (configurable, calibrar mensualmente).
+    import os as _os
+    modal_cost = float(_os.environ.get("MODAL_COST_PER_CALL_USD", "0.005") or 0)
+
     # 3. Registrar/actualizar llamada (upsert por retell_call_id)
     call_record = supabase_service.create_call_record(
         titulo=f"{tipo_llamada} - {nombre}",
@@ -141,6 +145,7 @@ def process_post_call(call_id: str) -> dict:
         costo_detalle=call_data.get("costo_detalle"),
         carrier=carrier,
         costo_anthropic_usd=float(analysis.get("_cost_usd", 0) or 0),
+        costo_modal_usd=modal_cost,
     )
 
     # 4. Lead: solo si hay análisis útil
