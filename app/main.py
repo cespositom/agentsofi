@@ -147,7 +147,7 @@ def trigger_outbound():
     return run_outbound_cycle()
 
 
-@modal_app.function(image=image, secrets=[sofia_secret])
+@modal_app.function(image=image, secrets=[sofia_secret], min_containers=1)
 @modal.asgi_app()
 def api():
     return web_app

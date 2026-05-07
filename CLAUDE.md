@@ -3,15 +3,22 @@
 > Guía de contexto para futuras sesiones de Claude Code que abran este proyecto.
 > Este es un **fork muy modificado** de `santmun/sofia-voice-agent`. El upstream apunta a México con Notion + Cal.com; este fork apunta a Chile con Supabase self-hosted y webapp propia. **No reintroducir Notion ni Cal.com.**
 
-## 0. Estado actual (al 2026-05-03) — pausado esperando Twilio
+## 0. Estado actual (al 2026-05-06) — número productivo configurado, smoke test outbound pendiente
 
-**TODO el sistema está desplegado y operativo a nivel software**, incluido el **redesign visual completo** del dashboard basado en el mock `sofia-ai-dashboard-v2-3.html` (en `C:\Users\cesar\Projects\open-design\.od\projects\896f57a4-...\`). La única razón por la que Sofía no está atendiendo llamadas en producción todavía es que **Twilio Trial bloquea outbound a Chile**. El próximo paso es:
+**TODO el sistema está desplegado y operativo a nivel software**, incluido el **redesign visual completo** del dashboard basado en el mock `sofia-ai-dashboard-v2-3.html` (en `C:\Users\cesar\Projects\open-design\.od\projects\896f57a4-...\`).
 
-1. **Activar billing en Twilio** (https://console.twilio.com/us1/billing/manage-billing → Add Funds USD 20)
-2. **Habilitar Geographic Permissions Chile** (Low Risk + High Risk Special Services) — solo aparece como opción cuando la cuenta sale del trial
-3. (En paralelo) Iniciar **Telnyx Level 2 Verification** para tener carrier secundario más barato (~$0.08/min vs $0.20 Twilio)
+**Twilio fuera del trial**: número productivo chileno **`+566009142119`** (servicio 600) provisionado y configurado como Custom telephony en Retell (SIP Trunk Twilio Elastic). Asignado a:
+- Inbound: `Sofía — Inmobiliaria Horizontes` (Allowed Inbound Countries: Chile)
+- Outbound: `Sofía Outbound — Inmobiliaria Horizontes` (Allowed Outbound Countries: Chile)
 
-Una vez activo Twilio paid, el sistema funciona end-to-end sin tocar más código. Multi-carrier ya está implementado y listo para activar Telnyx cuando llegue su aprobación (solo cambiar 3 env vars + redeploy Modal).
+El `.env` y el Modal Secret `sofia-credentials` ya tienen `TWILIO_PHONE_NUMBER=+566009142119`. El Modal app `sofia-voice-agent` fue redeployado desde esta carpeta (opt1) tras detectar que un deploy previo de opt2 había pisado el código → ahora `/trigger-outbound` corre `supabase_service.get_pending_leads()` y devuelve JSON 200 OK.
+
+**Pendiente para cerrar el loop**:
+1. Verificar que **Geographic Permissions Chile** estén habilitadas en Twilio (Low Risk + High Risk Special Services).
+2. **Smoke test outbound real**: lead "Cesar Test" (`+56982696258`) → trigger desde dashboard → atender en móvil → confirmar fila en `llamadas` con `carrier=twilio` y costos > 0.
+3. (En paralelo) **Telnyx Level 2 Verification** para activar fallback más barato (~$0.08/min vs $0.20 Twilio).
+
+⚠ **Footgun confirmado**: opt2 (`sofia-voice-agent-opt2`) usa el mismo `modal.App("sofia-voice-agent")` que opt1. Cualquier `modal deploy` desde una carpeta pisa la otra. Mitigación pendiente: renombrar el App en opt2 a `sofia-voice-agent-twenty`.
 
 ### Redesign visual (mayo 2026)
 El dashboard fue reescrito completamente con el mock open-design:
@@ -39,8 +46,8 @@ El dashboard fue reescrito completamente con el mock open-design:
 - **Outbound**: `agent_d7c23dcd3f6dbacce469d57174` (LLM `llm_b424138e5ed7a24405e28f36a803`)
 - **Modelo**: `claude-4.5-haiku` (cambiado de Sonnet — 30% más barato, calidad suficiente)
 - **Voz**: `retell-Claudia` (es-CL nativa)
-- **SIP Trunk Twilio configurado** en Retell apuntando al `+16184271591` (Twilio trial US)
-- **`+56982696258`** verificado como Caller ID en Twilio Trial
+- **SIP Trunk Twilio Elastic** configurado en Retell como Custom telephony, número productivo chileno `+566009142119` (servicio 600). El antiguo trial US `+16184271591` quedó deprecado.
+- Sin restricción de Caller ID verificado: al salir del trial, Twilio permite outbound a cualquier destino habilitado en Geo Permissions.
 
 ### Datos de prueba cargados
 - 51 propiedades RM (mix venta UF / arriendo CLP) — ver `supabase_seed_propiedades.sql`
@@ -164,7 +171,7 @@ Configurado vía env vars en `.env`:
 ```
 PRIMARY_CARRIER=twilio       # twilio | telnyx
 FALLBACK_CARRIER=            # vacío hoy; cuando Telnyx esté arriba: twilio
-TWILIO_PHONE_NUMBER=+1XXXX   # ya configurado
+TWILIO_PHONE_NUMBER=+566009142119   # número productivo chileno (servicio 600)
 TELNYX_PHONE_NUMBER=         # vacío — se llena cuando Telnyx apruebe Level 2
 ```
 
@@ -242,10 +249,11 @@ docker exec -e PGPASSWORD="$PG_PASS" $DB psql -U postgres -d postgres -f /tmp/x.
 
 ## 10. Pendientes humanos
 
-- [ ] **Twilio**: Add Funds USD 20 → habilitar Geo Permissions Chile (Low + High Risk Special Services)
+- [x] ~~**Twilio**: Add Funds USD 20 → habilitar Geo Permissions Chile~~ — cuenta fuera del trial; verificar igual que Geo Permissions Chile (Low + High Risk Special Services) estén habilitadas
+- [x] ~~Provisionar número Chile productivo~~ — `+566009142119` (servicio 600) configurado en Twilio Elastic SIP Trunk + Retell Custom telephony
+- [ ] **Smoke test outbound real** con lead Cesar Test (`+56982696258`) — confirmar fila en `llamadas` con `carrier=twilio` y costos > 0
 - [ ] **Telnyx**: Level 2 Verification + crear SIP Connection + Outbound Voice Profile con Chile habilitado → pegar `TELNYX_PHONE_NUMBER` en `.env` + cambiar `PRIMARY_CARRIER=telnyx` y `FALLBACK_CARRIER=twilio`
-- [ ] Probar llamada outbound real una vez activado Twilio paid (lead Cesar Test +56982696258 ya pre-cargado en estado Pendiente de llamar)
-- [ ] (opcional) Migrar a un número Chile real para mejor caller-ID (Voiso/Entel/contrato local)
+- [ ] **Renombrar Modal App de opt2** (`sofia-voice-agent-opt2`) a `sofia-voice-agent-twenty` para eliminar el riesgo de pisar el deploy de opt1
 - [ ] (opcional) Configurar Origination URI `sip:sip.retellai.com;transport=tcp` en el SIP trunk Twilio para activar inbound
 
 ## 11. Documentos de referencia

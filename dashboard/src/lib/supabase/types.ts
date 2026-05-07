@@ -95,6 +95,7 @@ export interface Llamada {
   retell_call_id: string | null;
   costo_retell_usd: number;
   costo_twilio_usd: number;
+  costo_anthropic_usd: number;
   costo_detalle: { product: string; cost_cents: number }[] | null;
   carrier: "twilio" | "telnyx" | null;
   created_at: string;
@@ -123,9 +124,11 @@ export interface KpiResumen {
   propiedades_disponibles: number;
   costo_retell_24h_usd: number;
   costo_twilio_24h_usd: number;
+  costo_anthropic_24h_usd: number;
   costo_24h_usd: number;
   costo_retell_total_usd: number;
   costo_twilio_total_usd: number;
+  costo_anthropic_total_usd: number;
   costo_total_usd: number;
   calls_twilio_24h: number;
   calls_telnyx_24h: number;
