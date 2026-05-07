@@ -14,7 +14,7 @@ MODEL_PRICING = {
     "claude-opus-4-7": {"in": 15.00, "out": 75.00},
 }
 
-ANALYSIS_MODEL = "claude-sonnet-4-5"
+ANALYSIS_MODEL = "claude-haiku-4-5"
 
 
 def get_client() -> anthropic.Anthropic:
