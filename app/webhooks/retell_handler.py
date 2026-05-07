@@ -1,6 +1,15 @@
 import json
+import os
+import time
 
 from app.services import anthropic_service, supabase_service, retell_service
+
+
+# Modal pricing: ~$0.000111 per CPU-second a 1 vCPU + RAM. Conservador 0.0002.
+# Override via env si querés calibrar contra billing real.
+MODAL_RATE_USD_PER_CPU_SEC = float(
+    os.environ.get("MODAL_RATE_USD_PER_CPU_SEC", "0.0002")
+)
 
 
 def _extract_call_id(data: dict) -> str:
@@ -15,21 +24,56 @@ def _extract_call_id(data: dict) -> str:
     return data.get("call_id", "")
 
 
+def _add_compute_seconds(call_id: str, seconds: float) -> None:
+    """Acumula segundos de compute al registro de la llamada.
+    Idempotente vía read-modify-write (los webhooks de un mismo call_id
+    son secuenciales, no hay race condition realista)."""
+    if not call_id or seconds <= 0:
+        return
+    try:
+        sb = supabase_service._sb()
+        existing = (
+            sb.table("llamadas")
+              .select("id, compute_modal_seg, costo_modal_usd")
+              .eq("retell_call_id", call_id)
+              .limit(1)
+              .execute()
+        )
+        if not existing.data:
+            return
+        row = existing.data[0]
+        new_seg = float(row.get("compute_modal_seg") or 0) + seconds
+        new_cost = round(new_seg * MODAL_RATE_USD_PER_CPU_SEC, 6)
+        sb.table("llamadas").update({
+            "compute_modal_seg": new_seg,
+            "costo_modal_usd": new_cost,
+        }).eq("id", row["id"]).execute()
+    except Exception as e:
+        print(f"[Sofia] _add_compute_seconds error: {e}")
+
+
 def handle_retell_event(request: dict) -> dict:
     """Procesa eventos de Retell AI: call_started, call_ended, call_analyzed."""
     event_type = request.get("event", "unknown")
 
-    # Log del payload para debug (primera línea con las keys)
     print(f"[Sofia] Webhook recibido: event={event_type}, keys={list(request.keys())}")
 
-    if event_type == "call_started":
-        return _on_call_started(request)
-    elif event_type == "call_ended":
-        return _on_call_ended(request)
-    elif event_type == "call_analyzed":
-        return _on_call_analyzed(request)
-    else:
-        return {"status": "ignored", "event": event_type}
+    t0 = time.perf_counter()
+    call_id = _extract_call_id(request)
+    try:
+        if event_type == "call_started":
+            return _on_call_started(request)
+        elif event_type == "call_ended":
+            return _on_call_ended(request)
+        elif event_type == "call_analyzed":
+            return _on_call_analyzed(request)
+        else:
+            return {"status": "ignored", "event": event_type}
+    finally:
+        elapsed = time.perf_counter() - t0
+        if event_type in ("call_ended", "call_analyzed") and call_id:
+            # call_started no tiene fila aún, no acumular
+            _add_compute_seconds(call_id, elapsed)
 
 
 def _on_call_started(data: dict) -> dict:

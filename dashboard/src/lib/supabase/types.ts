@@ -97,9 +97,22 @@ export interface Llamada {
   costo_twilio_usd: number;
   costo_anthropic_usd: number;
   costo_modal_usd: number;
+  compute_modal_seg: number;
   costo_detalle: { product: string; cost_cents: number }[] | null;
   carrier: "twilio" | "telnyx" | null;
   created_at: string;
+}
+
+export interface CostoPorMes {
+  mes: string;
+  mes_inicio: string;
+  llamadas: number;
+  duracion_total_seg: number;
+  costo_retell_usd: number;
+  costo_twilio_usd: number;
+  costo_anthropic_usd: number;
+  costo_modal_usd: number;
+  costo_total_usd: number;
 }
 
 export interface Visita {

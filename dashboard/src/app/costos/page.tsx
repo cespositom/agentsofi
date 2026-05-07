@@ -1,9 +1,11 @@
 import { Shell } from "@/components/shell";
 import { createClient } from "@/lib/supabase/server";
 import { fmtUSD, fmtFechaCL } from "@/lib/format";
-import type { KpiResumen, Llamada } from "@/lib/supabase/types";
+import type { KpiResumen, Llamada, CostoPorMes } from "@/lib/supabase/types";
 
 export const dynamic = "force-dynamic";
+
+const MONTHLY_BUDGET_USD = Number(process.env.NEXT_PUBLIC_MONTHLY_BUDGET_USD ?? "100");
 
 export default async function CostosPage() {
   const supabase = await createClient();
@@ -11,17 +13,21 @@ export default async function CostosPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [kpiRes, callsRes] = await Promise.all([
+  const [kpiRes, callsRes, mesesRes] = await Promise.all([
     supabase.from("kpi_resumen").select("*").single(),
     supabase
       .from("llamadas")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(500),
+    supabase
+      .from("costos_por_mes")
+      .select("*"),
   ]);
 
   const kpi = (kpiRes.data ?? null) as KpiResumen | null;
   const calls = (callsRes.data ?? []) as Llamada[];
+  const meses = (mesesRes.data ?? []) as CostoPorMes[];
 
   const totalMin =
     calls.reduce((s, c) => s + (c.duracion_seg || 0), 0) / 60;
@@ -121,6 +127,70 @@ export default async function CostosPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Costos por mes */}
+      <div className="sofia-card mb-5">
+        <div className="flex items-baseline justify-between mb-3">
+          <div className="text-[13px] font-semibold">Costos por mes</div>
+          <div className="text-[11px]" style={{ color: "var(--sofia-muted)" }}>
+            Budget mensual: {fmtUSD(MONTHLY_BUDGET_USD)} ·{" "}
+            {meses.length} meses con actividad
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="sofia-table min-w-[800px]">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Llamadas</th>
+                <th>Minutos</th>
+                <th>Retell</th>
+                <th>Telefonía</th>
+                <th>IA</th>
+                <th>Modal</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {meses.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-center py-6" style={{ color: "var(--sofia-muted)" }}>
+                    Sin actividad histórica.
+                  </td>
+                </tr>
+              )}
+              {meses.map((m) => {
+                const overBudget = Number(m.costo_total_usd) > MONTHLY_BUDGET_USD;
+                const minutes = Number(m.duracion_total_seg) / 60;
+                return (
+                  <tr key={m.mes}>
+                    <td className="font-mono text-[13px] font-semibold">{m.mes}</td>
+                    <td className="font-mono text-[13px]">{m.llamadas}</td>
+                    <td className="font-mono text-[13px]">{minutes.toFixed(1)}</td>
+                    <td className="font-mono text-[13px]">{fmtUSD(m.costo_retell_usd)}</td>
+                    <td className="font-mono text-[13px]">{fmtUSD(m.costo_twilio_usd)}</td>
+                    <td className="font-mono text-[13px]">{fmtUSD(m.costo_anthropic_usd)}</td>
+                    <td className="font-mono text-[13px]">{fmtUSD(m.costo_modal_usd)}</td>
+                    <td
+                      className="font-mono text-[13px] font-bold"
+                      style={{
+                        color: overBudget
+                          ? "var(--sofia-danger)"
+                          : "var(--sofia-accent)",
+                      }}
+                    >
+                      {fmtUSD(m.costo_total_usd)}
+                      {overBudget && (
+                        <span className="ml-1 text-[10px]" title="Sobre budget">⚠</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Breakdown por carrier */}
